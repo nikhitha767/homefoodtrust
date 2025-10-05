@@ -1,5 +1,6 @@
+// src/components/Sandwich.tsx
 import React, { useState, useEffect } from "react";
-import { useCart } from "../context/CartContext"; // Import the cart context
+import { useCart } from '../context/CartContext'; // ✅ ADD CartContext
 
 interface FoodItem {
   id: number;
@@ -10,6 +11,15 @@ interface FoodItem {
   category: string;
 }
 
+interface CartItem {
+  id: number;
+  name: string;
+  price: number;
+  quantity: number;
+  type: string;
+  image: string;
+}
+
 interface SignupForm {
   name: string;
   email: string;
@@ -18,10 +28,11 @@ interface SignupForm {
   confirmPassword: string;
 }
 
-const NonVeg: React.FC = () => {
+const Sandwich: React.FC = () => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
   const [showSignup, setShowSignup] = useState(false);
   const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [showCart, setShowCart] = useState(false);
   const [signupForm, setSignupForm] = useState<SignupForm>({
     name: '',
@@ -31,82 +42,123 @@ const NonVeg: React.FC = () => {
     confirmPassword: ''
   });
 
-  // Use global cart context
-  const { cartState, addToCart, updateQuantity, removeFromCart, clearCart, getTotalItems } = useCart();
+  // ✅ ADD THIS LINE - Global cart context
+  const { addToCart: addToGlobalCart, getTotalItems } = useCart();
 
   useEffect(() => {
-    const fetchNonVegItems = () => {
+    const fetchSandwichItems = () => {
       const items: FoodItem[] = [
         {
           id: 1,
-          name: "Chicken Biryani",
-          description: "Fragrant basmati rice with tender chicken and spices",
-          price: 320,
-          image: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
-          category: "Biryani"
+          name: "Classic Veg Sandwich",
+          description: "Fresh bread with cucumber, tomato, lettuce and mayo",
+          price: 120,
+          image: "https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=400&h=300&fit=crop",
+          category: "Classic"
         },
         {
           id: 2,
-          name: "Butter Chicken",
-          description: "Tender chicken in rich buttery tomato gravy",
-          price: 350,
-          image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop",
-          category: "Curry"
+          name: "Grilled Cheese Sandwich",
+          description: "Toasted bread with melted cheese and butter",
+          price: 150,
+          image: "https://images.unsplash.com/photo-1528735602780-2552fd46c7af?w=400&h=300&fit=crop",
+          category: "Grilled"
         },
         {
           id: 3,
-          name: "Chicken Tikka Masala",
-          description: "Grilled chicken chunks in spiced creamy sauce",
-          price: 380,
-          image: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=400&h=300&fit=crop",
-          category: "Starter"
+          name: "Club Sandwich",
+          description: "Triple decker with veggies, cheese and sauces",
+          price: 180,
+          image: "https://images.unsplash.com/photo-1548340747-4761b75b90d9?w=400&h=300&fit=crop",
+          category: "Premium"
         },
         {
           id: 4,
-          name: "Mutton Rogan Josh",
-          description: "Kashmiri style mutton curry with aromatic spices",
-          price: 420,
-          image: "https://images.unsplash.com/photo-1594041680534-e8c8cdebd659?w=400&h=300&fit=crop",
-          category: "Curry"
+          name: "Paneer Tikka Sandwich",
+          description: "Spiced cottage cheese with mint chutney in toasted bread",
+          price: 160,
+          image: "https://images.unsplash.com/photo-1553909489-cd47e0907980?w=400&h=300&fit=crop",
+          category: "Indian"
         },
         {
           id: 5,
-          name: "Fish Curry",
-          description: "Fresh fish cooked in tangy coconut gravy",
-          price: 280,
-          image: "https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=400&h=300&fit=crop",
-          category: "Seafood"
+          name: "Bombay Masala Sandwich",
+          description: "Spicy potato masala with chutneys and sev",
+          price: 140,
+          image: "https://images.unsplash.com/photo-1565310022181-41bc6d2d2750?w=400&h=300&fit=crop",
+          category: "Street Style"
         },
         {
           id: 6,
-          name: "Chicken Fried Rice",
-          description: "Stir-fried rice with chicken and vegetables",
-          price: 240,
-          image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=300&fit=crop",
-          category: "Chinese"
+          name: "Veggie Delight Sandwich",
+          description: "Assorted fresh vegetables with herb mayo",
+          price: 130,
+          image: "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=400&h=300&fit=crop",
+          category: "Healthy"
         },
         {
           id: 7,
-          name: "Egg Curry",
-          description: "Boiled eggs in flavorful onion-tomato gravy",
-          price: 180,
-          image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400&h=300&fit=crop",
-          category: "Curry"
+          name: "Corn & Cheese Sandwich",
+          description: "Sweet corn with melted cheese and herbs",
+          price: 145,
+          image: "https://images.unsplash.com/photo-1481070555726-e2fe8357725c?w=400&h=300&fit=crop",
+          category: "Cheesy"
         },
         {
           id: 8,
-          name: "Chicken Shawarma",
-          description: "Middle Eastern wrap with spiced chicken and sauces",
-          price: 200,
-          image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop",
+          name: "Italian Sub Sandwich",
+          description: "Herbed bread with olives, tomatoes and dressing",
+          price: 170,
+          image: "https://images.unsplash.com/photo-1541519227354-08fa5d50c44d?w=400&h=300&fit=crop",
+          category: "Italian"
+        },
+        {
+          id: 9,
+          name: "Mexican Wrap Sandwich",
+          description: "Tortilla wrap with beans, corn and salsa",
+          price: 165,
+          image: "https://images.unsplash.com/photo-1565299585323-38174c13fae8?w=400&h=300&fit=crop",
           category: "Wrap"
+        },
+        {
+          id: 10,
+          name: "BBQ Veg Sandwich",
+          description: "Grilled vegetables with BBQ sauce and cheese",
+          price: 155,
+          image: "https://images.unsplash.com/photo-1551504734-5ee1c4a1479b?w=400&h=300&fit=crop",
+          category: "Grilled"
+        },
+        {
+          id: 11,
+          name: "Cucumber Tea Sandwich",
+          description: "Elegant thin bread with cucumber and cream cheese",
+          price: 110,
+          image: "https://images.unsplash.com/photo-1482049016688-2d3e1b311543?w=400&h=300&fit=crop",
+          category: "Tea Time"
+        },
+        {
+          id: 12,
+          name: "Garlic Bread Sandwich",
+          description: "Garlic butter toasted bread with herb filling",
+          price: 135,
+          image: "https://images.unsplash.com/photo-1573140247632-f8fd74997d5c?w=400&h=300&fit=crop",
+          category: "Garlic"
         }
       ];
       setFoodItems(items);
     };
 
-    fetchNonVegItems();
+    // Load cart from localStorage
+    const savedCart = localStorage.getItem('sandwichCart');
+    if (savedCart) {
+      setCartItems(JSON.parse(savedCart));
+    }
+
+    fetchSandwichItems();
   }, []);
+
+  // Calculate total amount
+  const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
 
   const handleOrder = (item: FoodItem) => {
     setCurrentItem(item);
@@ -114,36 +166,73 @@ const NonVeg: React.FC = () => {
   };
 
   const handleAddToCart = (item: FoodItem) => {
-    // Convert to CartItem format for global cart
-    const cartItem = {
+    const existingItemIndex = cartItems.findIndex(cartItem => cartItem.id === item.id);
+    
+    let updatedCart: CartItem[];
+    
+    if (existingItemIndex >= 0) {
+      // Item already in cart, increase quantity
+      updatedCart = cartItems.map((cartItem, index) => 
+        index === existingItemIndex 
+          ? { ...cartItem, quantity: cartItem.quantity + 1 }
+          : cartItem
+      );
+    } else {
+      // New item to cart
+      const newCartItem: CartItem = {
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        quantity: 1,
+        type: 'sandwich',
+        image: item.image
+      };
+      updatedCart = [...cartItems, newCartItem];
+    }
+    
+    setCartItems(updatedCart);
+    localStorage.setItem('sandwichCart', JSON.stringify(updatedCart));
+    
+    // ✅ ADD THIS: Global cart lo kuda add chey
+    const globalCartItem = {
       id: item.id.toString(),
       name: item.name,
       price: item.price,
       quantity: 1,
       image: item.image,
-      category: item.category
+      category: 'sandwich'
     };
-    
-    addToCart(cartItem);
+    addToGlobalCart(globalCartItem);
     
     // Auto open cart popup after adding item
     setShowCart(true);
   };
 
-  const handleUpdateQuantity = (itemId: string, newQuantity: number) => {
+  const updateCartQuantity = (itemId: number, newQuantity: number) => {
     if (newQuantity < 1) {
-      removeFromCart(itemId);
+      // Remove item if quantity is 0
+      const updatedCart = cartItems.filter(item => item.id !== itemId);
+      setCartItems(updatedCart);
+      localStorage.setItem('sandwichCart', JSON.stringify(updatedCart));
     } else {
-      updateQuantity(itemId, newQuantity);
+      // Update quantity
+      const updatedCart = cartItems.map(item =>
+        item.id === itemId ? { ...item, quantity: newQuantity } : item
+      );
+      setCartItems(updatedCart);
+      localStorage.setItem('sandwichCart', JSON.stringify(updatedCart));
     }
   };
 
-  const handleRemoveFromCart = (itemId: string) => {
-    removeFromCart(itemId);
+  const removeFromCart = (itemId: number) => {
+    const updatedCart = cartItems.filter(item => item.id !== itemId);
+    setCartItems(updatedCart);
+    localStorage.setItem('sandwichCart', JSON.stringify(updatedCart));
   };
 
-  const handleClearCart = () => {
-    clearCart();
+  const clearCart = () => {
+    setCartItems([]);
+    localStorage.removeItem('sandwichCart');
     setShowCart(false); // Close cart after clearing
   };
 
@@ -168,16 +257,16 @@ const NonVeg: React.FC = () => {
     localStorage.setItem('userData', JSON.stringify(userData));
     
     // Handle order from cart or single item
-    if (cartState.items.length > 0) {
+    if (cartItems.length > 0) {
       // Order all cart items
       const orderData = {
-        items: cartState.items,
-        totalAmount: cartState.totalAmount,
+        items: cartItems,
+        totalAmount: totalAmount,
         userId: signupForm.email,
         timestamp: new Date().toISOString()
       };
       localStorage.setItem('lastOrder', JSON.stringify(orderData));
-      alert(`🎉 Welcome ${signupForm.name}! Your order for ${cartState.items.length} non-veg items has been placed successfully!`);
+      alert(`🎉 Welcome ${signupForm.name}! Your order for ${cartItems.length} sandwich items has been placed successfully!`);
       clearCart(); // Clear cart after successful order
     } else if (currentItem) {
       // Single item order
@@ -219,7 +308,7 @@ const NonVeg: React.FC = () => {
             key={index}
             className={`absolute w-8 h-8 sm:w-10 sm:h-10 rounded-full opacity-10 animate-float ${
               index % 3 === 0 
-                ? 'bg-gradient-to-br from-red-400 to-red-600' 
+                ? 'bg-gradient-to-br from-amber-400 to-amber-600' 
                 : index % 3 === 1 
                 ? 'bg-gradient-to-br from-orange-400 to-orange-600'
                 : 'bg-gradient-to-br from-yellow-400 to-yellow-600'
@@ -236,23 +325,22 @@ const NonVeg: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 relative overflow-hidden">
-      {/* Cart Button */}
+    <div className="min-h-screen bg-gradient-to-br from-amber-50 to-orange-100 relative overflow-hidden">
+      {/* Cart Button - ✅ MODIFIED: Global cart count show chey */}
       <div className="fixed top-4 right-4 z-40">
         <button
           onClick={() => setShowCart(true)}
-          className="bg-gradient-to-r from-red-500 to-orange-500 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 flex items-center gap-2"
+          className="bg-gradient-to-r from-amber-500 to-orange-500 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 flex items-center gap-2"
         >
           <span className="text-xl">🛒</span>
-          {getTotalItems() > 0 && (
-            <span className="bg-white text-red-500 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
-              {getTotalItems()}
-            </span>
-          )}
+          {/* ✅ CHANGED: Global cart count use chey */}
+          <span className="bg-white text-amber-500 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
+            {getTotalItems()}
+          </span>
         </button>
-        {getTotalItems() > 0 && (
+        {cartItems.length > 0 && (
           <div className="text-right mt-2 text-sm font-semibold text-gray-700">
-            Total: ₹{cartState.totalAmount}
+            Total: ₹{totalAmount}
           </div>
         )}
       </div>
@@ -264,11 +352,14 @@ const NonVeg: React.FC = () => {
 
       {/* Header */}
       <div className="relative z-10 text-center pt-8 pb-12 px-4">
-        <h1 className="text-4xl md:text-6xl font-bold text-red-800 mb-4">
-          🍗 Non-Veg Delights
+        <h1 className="text-4xl md:text-6xl font-bold text-amber-800 mb-4">
+          🥪 Sandwich Corner
         </h1>
         <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
-          Delicious and protein-rich non-vegetarian food made with premium ingredients
+          Freshly made sandwiches with premium ingredients and delicious fillings
+        </p>
+        <p className="text-sm text-amber-600 mt-4">
+          {foodItems.length} delicious sandwich varieties available
         </p>
       </div>
 
@@ -285,9 +376,13 @@ const NonVeg: React.FC = () => {
                   src={item.image}
                   alt={item.name}
                   className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                  onError={(e) => {
+                    // Fallback image if original fails
+                    e.currentTarget.src = 'https://images.unsplash.com/photo-1539252554453-80ab65ce3586?w=400&h=300&fit=crop';
+                  }}
                 />
                 <div className="absolute top-4 right-4">
-                  <span className="bg-gradient-to-r from-red-500 to-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                  <span className="bg-gradient-to-r from-amber-500 to-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
                     {item.category}
                   </span>
                 </div>
@@ -303,7 +398,7 @@ const NonVeg: React.FC = () => {
                 </p>
                 
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-red-700">
+                  <span className="text-2xl font-bold text-amber-700">
                     ₹{item.price}
                   </span>
                   <div className="flex gap-2">
@@ -315,7 +410,7 @@ const NonVeg: React.FC = () => {
                     </button>
                     <button
                       onClick={() => handleOrder(item)}
-                      className="bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
+                      className="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
                     >
                       Order Now
                     </button>
@@ -332,9 +427,9 @@ const NonVeg: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
             {/* Header */}
-            <div className="bg-gradient-to-r from-red-500 to-orange-500 p-6 text-white">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white">
               <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold">🛒 Your Non-Veg Cart</h2>
+                <h2 className="text-2xl font-bold">🛒 Your Sandwich Cart</h2>
                 <button
                   onClick={() => setShowCart(false)}
                   className="text-white hover:text-gray-200 text-2xl transition-transform hover:scale-110"
@@ -343,27 +438,27 @@ const NonVeg: React.FC = () => {
                 </button>
               </div>
               <p className="text-orange-100 mt-2">
-                {cartState.items.length} {cartState.items.length === 1 ? 'item' : 'items'} in cart
+                {cartItems.length} {cartItems.length === 1 ? 'item' : 'items'} in cart
               </p>
             </div>
 
             {/* Cart Items */}
             <div className="p-6 max-h-96 overflow-y-auto">
-              {cartState.items.length === 0 ? (
+              {cartItems.length === 0 ? (
                 <div className="text-center py-8 text-gray-500">
                   <span className="text-6xl">🛒</span>
                   <p className="text-xl mt-4">Your cart is empty</p>
-                  <p className="text-sm">Add some delicious non-veg items to get started!</p>
+                  <p className="text-sm">Add some delicious sandwiches to get started!</p>
                   <button
                     onClick={() => setShowCart(false)}
-                    className="mt-4 bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-all duration-200"
+                    className="mt-4 bg-amber-500 hover:bg-amber-600 text-white px-6 py-2 rounded-lg transition-all duration-200"
                   >
                     Continue Shopping
                   </button>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {cartState.items.map((item) => (
+                  {cartItems.map((item) => (
                     <div key={item.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200">
                       <img
                         src={item.image}
@@ -372,18 +467,18 @@ const NonVeg: React.FC = () => {
                       />
                       <div className="flex-1">
                         <h3 className="font-semibold text-gray-800">{item.name}</h3>
-                        <p className="text-red-600 font-bold">₹{item.price} each</p>
+                        <p className="text-amber-600 font-bold">₹{item.price} each</p>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity - 1)}
+                          onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
                           className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-all duration-200"
                         >
                           -
                         </button>
                         <span className="w-8 text-center font-semibold">{item.quantity}</span>
                         <button
-                          onClick={() => handleUpdateQuantity(item.id, item.quantity + 1)}
+                          onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
                           className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center hover:bg-gray-300 transition-all duration-200"
                         >
                           +
@@ -392,7 +487,7 @@ const NonVeg: React.FC = () => {
                       <div className="text-right">
                         <p className="font-bold text-gray-800">₹{item.price * item.quantity}</p>
                         <button
-                          onClick={() => handleRemoveFromCart(item.id)}
+                          onClick={() => removeFromCart(item.id)}
                           className="text-red-500 hover:text-red-700 text-sm mt-1 transition-all duration-200"
                         >
                           Remove
@@ -405,12 +500,12 @@ const NonVeg: React.FC = () => {
             </div>
 
             {/* Cart Summary */}
-            {cartState.items.length > 0 && (
+            {cartItems.length > 0 && (
               <div className="border-t border-gray-200 p-6 bg-gray-50">
                 <div className="space-y-3 mb-4">
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Subtotal:</span>
-                    <span className="text-xl font-bold text-gray-800">₹{cartState.totalAmount}</span>
+                    <span className="text-xl font-bold text-gray-800">₹{totalAmount}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-lg font-semibold">Delivery Fee:</span>
@@ -418,13 +513,13 @@ const NonVeg: React.FC = () => {
                   </div>
                   <div className="flex justify-between items-center border-t border-gray-300 pt-3">
                     <span className="text-xl font-bold">Total Amount:</span>
-                    <span className="text-2xl font-bold text-red-600">₹{cartState.totalAmount}</span>
+                    <span className="text-2xl font-bold text-amber-600">₹{totalAmount}</span>
                   </div>
                 </div>
                 
                 <div className="flex gap-3">
                   <button
-                    onClick={handleClearCart}
+                    onClick={clearCart}
                     className="flex-1 bg-gray-500 hover:bg-gray-600 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
                   >
                     Clear Cart
@@ -434,9 +529,9 @@ const NonVeg: React.FC = () => {
                       setShowCart(false);
                       setShowSignup(true);
                     }}
-                    className="flex-1 bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
+                    className="flex-1 bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
                   >
-                    Checkout ₹{cartState.totalAmount}
+                    Checkout ₹{totalAmount}
                   </button>
                 </div>
                 
@@ -452,7 +547,8 @@ const NonVeg: React.FC = () => {
         </div>
       )}
     </div>
+    
   );
 };
 
-export default NonVeg;
+export default Sandwich;

@@ -4,11 +4,7 @@ import { useNavigate } from 'react-router-dom';
 export default function HomeBody() {
   const navigate = useNavigate();
   
-  // Direct navigation function
-  const navigateToFoodForm = () => {
-    navigate('/food-item-form');
-  };
-
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-amber-50">
       {/* Hero Section */}
@@ -40,7 +36,8 @@ export default function HomeBody() {
                   View Menu
                 </button>
                 <button
-                  onClick={navigateToFoodForm}
+                  
+                  onClick={() => navigate('/FoodItemsForm')}
                   className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105"
                 >
                   Add Food

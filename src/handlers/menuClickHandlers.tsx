@@ -28,6 +28,11 @@ export const menuClickHandlers = {
     console.log('Beverages menu clicked');
     navigationService.navigateTo('/beverages'); // ✅ Fixed - function ledhu kabatti direct path
   },
+  handleSandwichClick: () => {
+    console.log('Sandwich menu clicked');
+    navigationService.navigateTo('/Sandwich'); // ✅ Fixed - function ledhu kabatti direct path
+  },
+  
 
   // Dropdown handlers
   handleDropdownToggle: (isOpen: boolean) => {

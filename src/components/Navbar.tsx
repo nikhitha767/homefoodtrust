@@ -63,6 +63,8 @@ export default function Navbar({
       navigate('/non-veg');
     } else if (item === 'tiffins') {
       navigate('/tiffins');
+    } else if (item === 'Sandwich') {
+      navigate('/sandwich');
     } else {
       navigate(`/search?q=${encodeURIComponent(item)}`);
     }
