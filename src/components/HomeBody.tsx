@@ -1,20 +1,12 @@
 import React, { useState } from 'react'; 
 import { useNavigate } from 'react-router-dom';
 
-
-
 export default function HomeBody() {
   const navigate = useNavigate();
-  const [showFoodItemForm, setShowFoodItemForm] = useState(false);
   
-  // Open FoodItemForm modal
-  const openFoodItemForm = () => {
-    setShowFoodItemForm(true);
-  };
-
-  // Close FoodItemForm modal
-  const closeFoodItemForm = () => {
-    setShowFoodItemForm(false);
+  // Direct navigation function
+  const navigateToFoodForm = () => {
+    navigate('/food-item-form');
   };
 
   return (
@@ -48,10 +40,10 @@ export default function HomeBody() {
                   View Menu
                 </button>
                 <button
-                  onClick={openFoodItemForm}
+                  onClick={navigateToFoodForm}
                   className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105"
                 >
-                  add food
+                  Add Food
                 </button>
               </div>
             </div>
@@ -270,7 +262,6 @@ export default function HomeBody() {
               Google Play
             </button>
           </div>
-          {showFoodItemForm && <FoodItemForm onClose={closeFoodItemForm} />}
         </div>
       </section>
     </div>

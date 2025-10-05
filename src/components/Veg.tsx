@@ -1,5 +1,6 @@
 // src/components/Veg.tsx
 import React, { useState, useEffect } from "react";
+import { productService, Product } from '../services/productService';
 
 interface FoodItem {
   id: number;
@@ -58,6 +59,7 @@ interface Notification {
 
 const Veg: React.FC = () => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
+  const [dbProducts, setDbProducts] = useState<Product[]>([]);
   const [showSignup, setShowSignup] = useState(false);
   const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -69,44 +71,53 @@ const Veg: React.FC = () => {
     password: '',
     confirmPassword: ''
   });
+  const [loading, setLoading] = useState(true);
 
+  // Fetch products from database
   useEffect(() => {
-    const fetchVegItems = () => {
-      const items: FoodItem[] = [
-        {
-          id: 1,
-          name: "Paneer Butter Masala",
-          description: "Cottage cheese in rich tomato gravy with butter",
-          price: 280,
-          image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop",
-          category: "Main Course"
-        },
-        {
-          id: 2,
-          name: "Aloo Paratha",
-          description: "Whole wheat bread stuffed with spiced potatoes",
-          price: 120,
-          image: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
-          category: "Bread"
-        },
-        {
-          id: 3,
-          name: "Veg Biryani",
-          description: "Fragrant rice with mixed vegetables and spices",
-          price: 220,
-          image: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
-          category: "Rice"
-        },
-        {
-          id: 4,
-          name: "Masala Dosa",
-          description: "Crispy crepe with spiced potato filling",
-          price: 150,
-          image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop",
-          category: "South Indian"
+    const fetchProducts = async () => {
+      try {
+        const response = await productService.getProducts('veg');
+        if (response.success) {
+          setDbProducts(response.products);
+          
+          // Convert database products to FoodItem format
+          const convertedProducts: FoodItem[] = response.products.map(product => ({
+            id: product.id,
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            image: product.image_url || 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop',
+            category: 'Main Course'
+          }));
+          
+          setFoodItems(convertedProducts);
         }
-      ];
-      setFoodItems(items);
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        // Fallback to default items if database fails
+        const defaultItems: FoodItem[] = [
+          {
+            id: 1,
+            name: "Paneer Butter Masala",
+            description: "Cottage cheese in rich tomato gravy with butter",
+            price: 280,
+            image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop",
+            category: "Main Course"
+          },
+          {
+            id: 2,
+            name: "Aloo Paratha",
+            description: "Whole wheat bread stuffed with spiced potatoes",
+            price: 120,
+            image: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
+            category: "Bread"
+          }
+        ];
+        setFoodItems(defaultItems);
+      } finally {
+        setLoading(false);
+      }
     };
 
     // Load cart from localStorage
@@ -115,7 +126,7 @@ const Veg: React.FC = () => {
       setCartItems(JSON.parse(savedCart));
     }
 
-    fetchVegItems();
+    fetchProducts();
   }, []);
 
   // Calculate total amount
@@ -320,6 +331,17 @@ const Veg: React.FC = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-green-800 font-semibold">Loading delicious vegetarian foods...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 relative overflow-hidden">
       {/* Cart Button */}
@@ -355,6 +377,11 @@ const Veg: React.FC = () => {
         <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
           Fresh, healthy, and delicious vegetarian food made with love and traditional recipes
         </p>
+        {dbProducts.length > 0 && (
+          <p className="text-sm text-green-600 mt-2">
+            🗃️ Connected to database - {dbProducts.length} items loaded
+          </p>
+        )}
       </div>
 
       {/* Food Grid */}
