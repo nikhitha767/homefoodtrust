@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useCart } from '../context/CartContext'; // ✅ ADD THIS IMPORT
 
 interface NavbarProps {
   cartItemsCount?: number;
@@ -22,6 +23,9 @@ export default function Navbar({
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [filteredItems, setFilteredItems] = React.useState<string[]>([]);
   const navigate = useNavigate();
+
+  // ✅ ADD THIS LINE - Global cart context
+  const { getTotalItems } = useCart();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -284,7 +288,7 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Cart */}
+            {/* Cart - ✅ MODIFIED: Global cart count use chey */}
             <button 
               onClick={() => handleNavigation('/cart')}
               className="relative p-2 text-gray-600 hover:text-orange-600 transition-colors duration-200"
@@ -292,9 +296,10 @@ export default function Navbar({
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              {cartItemsCount > 0 && (
+              {/* ✅ CHANGED: Global cart count use chey */}
+              {getTotalItems() > 0 && (
                 <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                  {cartItemsCount}
+                  {getTotalItems()}
                 </span>
               )}
             </button>
@@ -429,9 +434,10 @@ export default function Navbar({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 Cart
-                {cartItemsCount > 0 && (
+                {/* ✅ CHANGED: Mobile lo kuda global cart count use chey */}
+                {getTotalItems() > 0 && (
                   <span className="ml-auto bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                    {cartItemsCount}
+                    {getTotalItems()}
                   </span>
                 )}
               </button>
