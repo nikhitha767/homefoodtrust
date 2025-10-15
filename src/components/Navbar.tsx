@@ -1,13 +1,13 @@
 import * as React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext'; // ✅ ADD THIS IMPORT
+import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 
 interface NavbarProps {
   cartItemsCount?: number;
   favoriteItemsCount?: number;
 }
 
-// Only 6 main food items
 const foodItems = [
    "Veg", "Non-Veg", "tiffins", "Sandwich", "Soup","Others"
 ];
@@ -23,9 +23,8 @@ export default function Navbar({
   const [showSuggestions, setShowSuggestions] = React.useState(false);
   const [filteredItems, setFilteredItems] = React.useState<string[]>([]);
   const navigate = useNavigate();
-
-  // ✅ ADD THIS LINE - Global cart context
   const { getTotalItems } = useCart();
+  const { user, logout } = useAuth();
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -46,7 +45,11 @@ export default function Navbar({
     closeMenus();
   };
 
-  // Handle category menu hover
+  const handleLogout = () => {
+    logout();
+    navigate('/signin');
+  };
+
   const handleCategoryMenuEnter = () => {
     setIsCategoryMenuOpen(true);
   };
@@ -55,7 +58,6 @@ export default function Navbar({
     setIsCategoryMenuOpen(false);
   };
 
-  // Handle menu item click
   const handleMenuItemClick = (item: string) => {
     if (item === 'Veg') {
       navigate('/veg');
@@ -72,7 +74,6 @@ export default function Navbar({
     setIsMenuOpen(false);
   };
 
-  // Handle search input change
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -89,7 +90,6 @@ export default function Navbar({
     }
   };
 
-  // Handle search submission
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -99,14 +99,12 @@ export default function Navbar({
     }
   };
 
-  // Handle suggestion click
   const handleSuggestionClick = (item: string) => {
     setSearchQuery(item);
     navigate(`/search?q=${encodeURIComponent(item)}`);
     setShowSuggestions(false);
   };
 
-  // Close suggestions when clicking outside
   React.useEffect(() => {
     const handleClickOutside = () => {
       setShowSuggestions(false);
@@ -123,7 +121,6 @@ export default function Navbar({
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           
-          {/* Logo and Brand */}
           <div 
             className="flex items-center space-x-3 cursor-pointer"
             onClick={() => navigate('/')}
@@ -138,7 +135,6 @@ export default function Navbar({
             </span>
           </div>
 
-          {/* Navigation Links - Desktop */}
           <div className="hidden md:flex items-center space-x-1">
             <button 
               onClick={() => handleNavigation('/')}
@@ -147,7 +143,6 @@ export default function Navbar({
               Home
             </button>
             
-            {/* Menu with Dropdown - Only 6 items */}
             <div 
               className="relative"
               onMouseEnter={handleCategoryMenuEnter}
@@ -162,7 +157,6 @@ export default function Navbar({
                 </svg>
               </button>
 
-              {/* Simple Menu Dropdown with 6 items */}
               {isCategoryMenuOpen && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-50">
                   <div className="p-2">
@@ -198,7 +192,6 @@ export default function Navbar({
             </button>
           </div>
 
-          {/* Search Bar */}
           <div className="flex-1 max-w-lg mx-4 relative">
             <form onSubmit={handleSearchSubmit}>
               <div className="relative">
@@ -218,7 +211,6 @@ export default function Navbar({
               </div>
             </form>
 
-            {/* Search Suggestions */}
             {showSuggestions && filteredItems.length > 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
                 {filteredItems.map((item, index) => (
@@ -238,7 +230,6 @@ export default function Navbar({
               </div>
             )}
 
-            {/* No results message */}
             {showSuggestions && searchQuery && filteredItems.length === 0 && (
               <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
                 <div className="px-4 py-3 text-gray-500 text-center">
@@ -248,9 +239,7 @@ export default function Navbar({
             )}
           </div>
 
-          {/* Action Icons - Desktop */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* 🔥 Seller Button with Icon - UNCHINDI */}
             <button 
               onClick={() => handleNavigation('/seller/auth')}
               className="flex items-center space-x-1 px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-200"
@@ -262,7 +251,6 @@ export default function Navbar({
               <span className="text-sm font-medium">Seller</span>
             </button>
 
-            {/* 🔥 Admin Button with Icon - UNCHINDI */}
             <button 
               onClick={() => handleNavigation('/admin/dashboard')}
               className="flex items-center space-x-1 px-3 py-2 text-gray-600 hover:text-purple-600 transition-colors duration-200"
@@ -275,7 +263,6 @@ export default function Navbar({
               <span className="text-sm font-medium">Admin</span>
             </button>
 
-            {/* Favorites */}
             <button 
               onClick={() => handleNavigation('/favorites')}
               className="relative p-2 text-gray-600 hover:text-orange-600 transition-colors duration-200"
@@ -290,7 +277,6 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Cart - ✅ MODIFIED: Global cart count use chey */}
             <button 
               onClick={() => handleNavigation('/cart')}
               className="relative p-2 text-gray-600 hover:text-orange-600 transition-colors duration-200"
@@ -298,7 +284,6 @@ export default function Navbar({
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
               </svg>
-              {/* ✅ CHANGED: Global cart count use chey */}
               {getTotalItems() > 0 && (
                 <span className="absolute -top-1 -right-1 bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {getTotalItems()}
@@ -306,62 +291,66 @@ export default function Navbar({
               )}
             </button>
 
-            {/* Profile Menu */}
             <div className="relative">
-              <button 
-                onClick={toggleProfileMenu}
-                className="flex items-center space-x-2 p-2 text-gray-600 hover:text-orange-600 transition-colors duration-200"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </button>
-
-              {isProfileMenuOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+              {user ? (
+                <div>
                   <button 
-                    onClick={() => handleNavigation('/profile')}
-                    className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                    onClick={toggleProfileMenu}
+                    className="flex items-center space-x-2 p-2 text-gray-600 hover:text-orange-600 transition-colors duration-200"
                   >
-                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                     </svg>
-                    My Profile
+                    <span>{user.name}</span>
                   </button>
-                  <button 
-                    onClick={() => handleNavigation('/orders')}
-                    className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-                    </svg>
-                    My Orders
-                  </button>
-                  <button 
-                    onClick={() => handleNavigation('/favorites')}
-                    className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                    </svg>
-                    Favorites
-                  </button>
-                  <div className="border-t border-gray-100 my-1"></div>
-                  <button 
-                    onClick={() => handleNavigation('/logout')}
-                    className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-gray-50 transition-colors duration-200"
-                  >
-                    <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    Sign Out
-                  </button>
+
+                  {isProfileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                      <button 
+                        onClick={() => handleNavigation('/profile')}
+                        className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                        </svg>
+                        My Profile
+                      </button>
+                      <button 
+                        onClick={() => handleNavigation('/orders')}
+                        className="flex items-center w-full px-4 py-2 text-gray-700 hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                        </svg>
+                        My Orders
+                      </button>
+                      <div className="border-t border-gray-100 my-1"></div>
+                      <button 
+                        onClick={handleLogout}
+                        className="flex items-center w-full px-4 py-2 text-red-600 hover:bg-gray-50 transition-colors duration-200"
+                      >
+                        <svg className="w-4 h-4 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                        </svg>
+                        Sign Out
+                      </button>
+                    </div>
+                  )}
                 </div>
+              ) : (
+                <button 
+                  onClick={() => handleNavigation('/signin')}
+                  className="flex items-center space-x-2 p-2 text-gray-600 hover:text-orange-600 transition-colors duration-200"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>Sign In</span>
+                </button>
               )}
             </div>
           </div>
 
-          {/* Mobile Menu Button */}
           <button 
             onClick={toggleMenu}
             className="md:hidden p-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors duration-200"
@@ -372,7 +361,6 @@ export default function Navbar({
           </button>
         </div>
 
-        {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden absolute top-16 left-0 right-0 bg-white border-t border-gray-200 shadow-lg z-50">
             <div className="px-4 py-2 space-y-1">
@@ -386,7 +374,6 @@ export default function Navbar({
                 Home
               </button>
               
-              {/* Mobile Menu Items - Only 6 items */}
               <div className="border-t border-gray-100 pt-2">
                 <div className="px-2 py-1 text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">
                   Menu Items
@@ -436,7 +423,6 @@ export default function Navbar({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
                 Cart
-                {/* ✅ CHANGED: Mobile lo kuda global cart count use chey */}
                 {getTotalItems() > 0 && (
                   <span className="ml-auto bg-orange-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {getTotalItems()}
@@ -457,7 +443,6 @@ export default function Navbar({
         )}
       </div>
 
-      {/* Overlay for mobile menu */}
       {isMenuOpen && (
         <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden" 

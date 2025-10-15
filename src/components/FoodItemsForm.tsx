@@ -1,4 +1,7 @@
+// src/components/FoodItemsForm.tsx - COMPLETE UPDATED VERSION
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface FoodItem {
   id?: string;
@@ -8,8 +11,12 @@ interface FoodItem {
   address: string;
   price: number;
   rating: number;
-  category: 'veg' | 'non-veg' | '';
+  category: 'Veg' | 'Non-Veg' | 'tiffins' | 'Sandwich' | 'Soup' | 'Others' | '';
   imageFile?: File;
+  sellerId?: string;
+  sellerName?: string;
+  preparationTime?: number;
+  isAvailable?: boolean;
 }
 
 interface Toast {
@@ -19,6 +26,9 @@ interface Toast {
 }
 
 const FoodItemForm: React.FC = () => {
+  const { user } = useAuth();
+  const navigate = useNavigate();
+  
   const [foodItem, setFoodItem] = useState<FoodItem>({
     imageUrl: '',
     itemName: '',
@@ -27,6 +37,8 @@ const FoodItemForm: React.FC = () => {
     price: 0,
     rating: 0,
     category: '',
+    preparationTime: 30,
+    isAvailable: true
   });
 
   const [isDragging, setIsDragging] = useState(false);
@@ -35,6 +47,8 @@ const FoodItemForm: React.FC = () => {
   const [showFullscreenPreview, setShowFullscreenPreview] = useState(false);
   const [toasts, setToasts] = useState<Toast[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const categories = ['Veg', 'Non-Veg', 'tiffins', 'Sandwich', 'Soup', 'Others'];
 
   // Toast system
   const showToast = (message: string, type: Toast['type'] = 'info') => {
@@ -45,11 +59,11 @@ const FoodItemForm: React.FC = () => {
     }, 3000);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFoodItem(prev => ({
       ...prev,
-      [name]: name === 'price' || name === 'rating' ? parseFloat(value) || 0 : value
+      [name]: name === 'price' || name === 'rating' || name === 'preparationTime' ? parseFloat(value) || 0 : value
     }));
   };
 
@@ -82,14 +96,19 @@ const FoodItemForm: React.FC = () => {
 
   const handleImageFile = (file: File) => {
     if (file.type.startsWith('image/')) {
-      const url = URL.createObjectURL(file);
-      setPreviewUrl(url);
-      setFoodItem(prev => ({
-        ...prev,
-        imageFile: file,
-        imageUrl: url
-      }));
-      showToast('Image uploaded successfully!', 'success');
+      // Convert file to base64 for proper storage
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64Image = e.target?.result as string;
+        setPreviewUrl(base64Image);
+        setFoodItem(prev => ({
+          ...prev,
+          imageFile: file,
+          imageUrl: base64Image
+        }));
+        showToast('Image uploaded successfully!', 'success');
+      };
+      reader.readAsDataURL(file);
     } else {
       showToast('Please upload a valid image file', 'error');
     }
@@ -105,11 +124,17 @@ const FoodItemForm: React.FC = () => {
     setFoodItem(prev => ({ ...prev, rating }));
   };
 
-  const handleCategorySelect = (category: 'veg' | 'non-veg') => {
+  const handleCategorySelect = (category: FoodItem['category']) => {
     setFoodItem(prev => ({ ...prev, category }));
   };
 
   const handleSave = async () => {
+    if (!user) {
+      showToast('Please sign in to add food items', 'error');
+      navigate('/');
+      return;
+    }
+
     // Validate required fields
     if (!foodItem.itemName.trim()) {
       showToast('Please enter item name', 'error');
@@ -130,17 +155,37 @@ const FoodItemForm: React.FC = () => {
 
     setIsSubmitting(true);
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    console.log('Saving food item:', foodItem);
-    showToast('Food item saved successfully! 🎉', 'success');
-    
-    // Reset form after save
-    setTimeout(() => {
-      handleDiscard();
+    try {
+      // Create food item object with proper image handling
+      const newFoodItem = {
+        id: Math.random().toString(36).substr(2, 9),
+        ...foodItem,
+        sellerId: user.id,
+        sellerName: user.name,
+        isAvailable: true,
+        // Ensure imageUrl is properly set (either base64 or URL)
+        imageUrl: foodItem.imageUrl
+      };
+
+      // Get existing food items from localStorage
+      const existingFoodItems = JSON.parse(localStorage.getItem('foodItems') || '[]');
+      
+      // Add new food item
+      const updatedFoodItems = [...existingFoodItems, newFoodItem];
+      localStorage.setItem('foodItems', JSON.stringify(updatedFoodItems));
+
+      showToast(`"${foodItem.itemName}" added to ${foodItem.category} menu! 🎉`, 'success');
+      
+      // Redirect to the respective category page after save
+      setTimeout(() => {
+        navigate(`/${foodItem.category.toLowerCase()}`);
+        setIsSubmitting(false);
+      }, 1500);
+      
+    } catch (error) {
+      showToast('Failed to save food item. Please try again.', 'error');
       setIsSubmitting(false);
-    }, 1000);
+    }
   };
 
   const handleDiscard = () => {
@@ -152,6 +197,8 @@ const FoodItemForm: React.FC = () => {
       price: 0,
       rating: 0,
       category: '',
+      preparationTime: 30,
+      isAvailable: true
     });
     setPreviewUrl('');
     if (fileInputRef.current) {
@@ -173,6 +220,29 @@ const FoodItemForm: React.FC = () => {
   const closeFullscreenPreview = () => {
     setShowFullscreenPreview(false);
   };
+
+  // Seller info display
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 flex items-center justify-center">
+        <div className="text-center bg-white rounded-3xl shadow-2xl p-8 max-w-md mx-4">
+          <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-10 h-10 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Seller Access Required</h2>
+          <p className="text-gray-600 mb-6">Please sign in as a seller to add food items</p>
+          <button 
+            onClick={() => navigate('/')}
+            className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors font-semibold"
+          >
+            Sign In as Seller
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-orange-50 to-red-50 py-8 px-4">
@@ -228,8 +298,11 @@ const FoodItemForm: React.FC = () => {
                 Add New Food Item
               </h1>
               <p className="text-orange-100 text-lg animate-fade-in-up animation-delay-100">
-                Create a delicious entry for your food collection
+                Sell your delicious food to our customers
               </p>
+              <div className="mt-2 text-orange-200 animate-fade-in-up animation-delay-200">
+                Seller: <span className="font-semibold">{user.name}</span>
+              </div>
             </div>
           </div>
 
@@ -306,45 +379,20 @@ const FoodItemForm: React.FC = () => {
                   <label className="block text-lg font-semibold text-gray-800 mb-4">
                     Food Category *
                   </label>
-                  <div className="flex space-x-6">
-                    <button
-                      type="button"
-                      onClick={() => handleCategorySelect('veg')}
-                      className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${
-                        foodItem.category === 'veg'
-                          ? 'border-green-500 bg-green-50 shadow-lg scale-105'
-                          : 'border-gray-300 hover:border-green-400'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center space-x-3">
-                        <div className="w-6 h-6 border-2 border-green-500 rounded-full flex items-center justify-center">
-                          {foodItem.category === 'veg' && (
-                            <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />
-                          )}
-                        </div>
-                        <span className="text-lg font-semibold text-gray-800">Vegetarian</span>
-                      </div>
-                    </button>
-                    
-                    <button
-                      type="button"
-                      onClick={() => handleCategorySelect('non-veg')}
-                      className={`flex-1 p-4 rounded-xl border-2 transition-all duration-300 transform hover:scale-105 ${
-                        foodItem.category === 'non-veg'
-                          ? 'border-red-500 bg-red-50 shadow-lg scale-105'
-                          : 'border-gray-300 hover:border-red-400'
-                      }`}
-                    >
-                      <div className="flex items-center justify-center space-x-3">
-                        <div className="w-6 h-6 border-2 border-red-500 rounded-full flex items-center justify-center">
-                          {foodItem.category === 'non-veg' && (
-                            <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />
-                          )}
-                        </div>
-                        <span className="text-lg font-semibold text-gray-800">Non-Vegetarian</span>
-                      </div>
-                    </button>
-                  </div>
+                  <select
+                    name="category"
+                    value={foodItem.category}
+                    onChange={handleInputChange}
+                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-3 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 shadow-sm transform hover:scale-101"
+                    required
+                  >
+                    <option value="">Select Category</option>
+                    {categories.map(category => (
+                      <option key={category} value={category}>
+                        {category}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* Item Name */}
@@ -379,26 +427,43 @@ const FoodItemForm: React.FC = () => {
                   />
                 </div>
 
-                {/* Address */}
-                <div className="animate-fade-in-up animation-delay-600">
-                  <label className="block text-lg font-semibold text-gray-800 mb-2">
-                    Address
-                  </label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={foodItem.address}
-                    onChange={handleInputChange}
-                    placeholder="Restaurant or location address..."
-                    className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-3 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 shadow-sm transform hover:scale-101"
-                  />
+                {/* Address and Preparation Time */}
+                <div className="grid grid-cols-2 gap-6 animate-fade-in-up animation-delay-600">
+                  <div>
+                    <label className="block text-lg font-semibold text-gray-800 mb-2">
+                      Address
+                    </label>
+                    <input
+                      type="text"
+                      name="address"
+                      value={foodItem.address}
+                      onChange={handleInputChange}
+                      placeholder="Restaurant or location address..."
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-3 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 shadow-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-lg font-semibold text-gray-800 mb-2">
+                      Prep Time (mins)
+                    </label>
+                    <input
+                      type="number"
+                      name="preparationTime"
+                      value={foodItem.preparationTime || ''}
+                      onChange={handleInputChange}
+                      placeholder="30"
+                      min="1"
+                      className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:ring-3 focus:ring-orange-500 focus:border-orange-500 transition-all duration-300 shadow-sm"
+                    />
+                  </div>
                 </div>
 
                 {/* Price and Rating */}
                 <div className="grid grid-cols-2 gap-6 animate-fade-in-up animation-delay-700">
                   <div>
                     <label className="block text-lg font-semibold text-gray-800 mb-2">
-                      Price ($)
+                      Price (₹)
                     </label>
                     <input
                       type="number"
@@ -473,12 +538,12 @@ const FoodItemForm: React.FC = () => {
                     
                     {/* Category Badge */}
                     {foodItem.category && (
-                      <div className={`absolute top-4 left-4 w-8 h-8 rounded-full border-2 ${
-                        foodItem.category === 'veg' 
-                          ? 'border-green-500 bg-green-500' 
-                          : 'border-red-500 bg-red-500'
-                      } flex items-center justify-center shadow-lg transform transition-all duration-300 hover:scale-110`}>
-                        <div className="w-3 h-3 bg-white rounded-full"></div>
+                      <div className={`absolute top-4 left-4 px-3 py-1 rounded-full text-xs font-medium text-white shadow-lg ${
+                        foodItem.category === 'Veg' ? 'bg-green-500' :
+                        foodItem.category === 'Non-Veg' ? 'bg-red-500' :
+                        'bg-blue-500'
+                      }`}>
+                        {foodItem.category}
                       </div>
                     )}
                   </div>
@@ -503,20 +568,27 @@ const FoodItemForm: React.FC = () => {
                       {foodItem.description || 'A wonderful description of this amazing food item will appear here...'}
                     </p>
 
-                    <div className="flex items-center text-gray-500 space-x-2">
-                      <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
-                      </svg>
-                      <span className="text-sm truncate">{foodItem.address || 'Location not specified'}</span>
+                    <div className="flex items-center justify-between text-sm text-gray-500">
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        <span>{foodItem.preparationTime || 30} mins</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                        </svg>
+                        <span className="truncate max-w-32">{foodItem.address || 'Location not specified'}</span>
+                      </div>
                     </div>
 
                     <div className="flex justify-between items-center pt-4 border-t border-gray-100">
                       <span className="text-3xl font-bold text-gradient bg-gradient-to-r from-orange-500 to-red-500 bg-clip-text text-transparent">
-                        ${foodItem.price > 0 ? foodItem.price.toFixed(2) : '0.00'}
+                        ₹{foodItem.price > 0 ? foodItem.price.toFixed(2) : '0.00'}
                       </span>
                       <div className="text-xs text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
-                        Click image to preview
+                        By {user.name}
                       </div>
                     </div>
                   </div>
@@ -546,7 +618,7 @@ const FoodItemForm: React.FC = () => {
                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                         </svg>
-                        <span>Save Item</span>
+                        <span>Add to {foodItem.category || 'Menu'}</span>
                       </span>
                     )}
                   </button>

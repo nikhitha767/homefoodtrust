@@ -3,12 +3,16 @@ import React, { useState, useEffect } from "react";
 import { useCart } from "../context/CartContext";
 
 interface FoodItem {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;
   image: string;
   category: string;
+  sellerName: string;
+  preparationTime: number;
+  rating: number;
+  isAvailable: boolean;
 }
 
 interface SignupForm {
@@ -31,82 +35,103 @@ const Tiffins: React.FC = () => {
     password: '',
     confirmPassword: ''
   });
+  const [loading, setLoading] = useState(true);
 
   // Use global cart context
   const { cartState, addToCart, updateQuantity, removeFromCart, clearCart, getTotalItems } = useCart();
 
+  // Default tiffin items as fallback
+  const defaultTiffinItems: FoodItem[] = [
+    {
+      id: "1",
+      name: "Idli Sambar",
+      description: "Soft rice cakes with lentil soup and coconut chutney",
+      price: 60,
+      image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop",
+      category: "Breakfast",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 15,
+      rating: 4.4,
+      isAvailable: true
+    },
+    {
+      id: "2",
+      name: "Masala Dosa",
+      description: "Crispy crepe with spiced potato filling and chutneys",
+      price: 80,
+      image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=400&h=300&fit=crop",
+      category: "Breakfast",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 20,
+      rating: 4.6,
+      isAvailable: true
+    },
+    {
+      id: "3",
+      name: "Pongal",
+      description: "Comforting rice and lentil dish with ghee and spices",
+      price: 70,
+      image: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
+      category: "Breakfast",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 25,
+      rating: 4.3,
+      isAvailable: true
+    },
+    {
+      id: "4",
+      name: "Upma",
+      description: "Savory semolina porridge with vegetables and spices",
+      price: 50,
+      image: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
+      category: "Breakfast",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 15,
+      rating: 4.2,
+      isAvailable: true
+    }
+  ];
+
   useEffect(() => {
-    const fetchTiffinItems = () => {
-      const items: FoodItem[] = [
-        {
-          id: 1,
-          name: "Idli Sambar",
-          description: "Soft rice cakes with lentil soup and coconut chutney",
-          price: 60,
-          image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop",
-          category: "Breakfast"
-        },
-        {
-          id: 2,
-          name: "Masala Dosa",
-          description: "Crispy crepe with spiced potato filling and chutneys",
-          price: 80,
-          image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=400&h=300&fit=crop",
-          category: "Breakfast"
-        },
-        {
-          id: 3,
-          name: "Pongal",
-          description: "Comforting rice and lentil dish with ghee and spices",
-          price: 70,
-          image: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
-          category: "Breakfast"
-        },
-        {
-          id: 4,
-          name: "Upma",
-          description: "Savory semolina porridge with vegetables and spices",
-          price: 50,
-          image: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
-          category: "Breakfast"
-        },
-        {
-          id: 5,
-          name: "Puri Bhaji",
-          description: "Deep fried bread with spiced potato curry",
-          price: 75,
-          image: "https://images.unsplash.com/photo-1551782455-6b0a6b4e415a?w=400&h=300&fit=crop",
-          category: "Breakfast"
-        },
-        {
-          id: 6,
-          name: "Vada Sambar",
-          description: "Crispy lentil donuts with aromatic lentil soup",
-          price: 65,
-          image: "https://images.unsplash.com/photo-1546833999-b9f581a1996d?w=400&h=300&fit=crop",
-          category: "Breakfast"
-        },
-        {
-          id: 7,
-          name: "Uttapam",
-          description: "Thick savory pancake with vegetables and chutneys",
-          price: 85,
-          image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop",
-          category: "Breakfast"
-        },
-        {
-          id: 8,
-          name: "Medu Vada",
-          description: "Soft and fluffy lentil donuts with coconut chutney",
-          price: 55,
-          image: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
-          category: "Snack"
+    const loadFoodItems = () => {
+      try {
+        setLoading(true);
+        
+        // Get all food items from localStorage
+        const allFoodItems = JSON.parse(localStorage.getItem('foodItems') || '[]');
+        
+        // Filter only tiffins category items that are available
+        const tiffinItems = allFoodItems.filter((item: FoodItem) => 
+          item.category === 'tiffins' && item.isAvailable !== false
+        );
+
+        console.log('Loaded tiffin items from storage:', tiffinItems.length);
+        
+        // If no items in storage, use default items
+        if (tiffinItems.length > 0) {
+          setFoodItems(tiffinItems);
+        } else {
+          setFoodItems(defaultTiffinItems);
+          console.log('Using default tiffin items');
         }
-      ];
-      setFoodItems(items);
+
+      } catch (error) {
+        console.error('Error loading food items:', error);
+        setFoodItems(defaultTiffinItems);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchTiffinItems();
+    loadFoodItems();
+
+    // Listen for storage changes (when new items are added)
+    const handleStorageChange = () => {
+      loadFoodItems();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Calculate total amount from global cart
@@ -120,12 +145,12 @@ const Tiffins: React.FC = () => {
   const handleAddToCart = (item: FoodItem) => {
     // Convert to CartItem format for global cart
     const cartItem = {
-      id: item.id.toString(),
+      id: item.id,
       name: item.name,
       price: item.price,
       quantity: 1,
       image: item.image,
-      category: item.category
+      category: item.category || 'tiffins'
     };
     
     addToCart(cartItem);
@@ -239,6 +264,17 @@ const Tiffins: React.FC = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-yellow-600 mx-auto"></div>
+          <p className="mt-4 text-yellow-800 font-semibold">Loading delicious tiffin items...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-yellow-50 to-orange-100 relative overflow-hidden">
       {/* Cart Button */}
@@ -274,60 +310,135 @@ const Tiffins: React.FC = () => {
         <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
           Fresh and delicious breakfast tiffins to start your day with energy
         </p>
+        
+        {/* Items count and source info */}
+        <div className="mt-4 flex justify-center items-center gap-4">
+          {foodItems.length > 0 && (
+            <>
+              <p className="text-sm text-yellow-600 bg-yellow-50 px-3 py-1 rounded-full">
+                🍽️ {foodItems.length} tiffin items available
+              </p>
+              {foodItems.some(item => item.sellerName && item.sellerName !== 'FoodHome Kitchen') && (
+                <p className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                  🛍️ Items from multiple sellers
+                </p>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Food Grid */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 pb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-          {foodItems.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-            >
-              <div className="relative h-48 sm:h-56 overflow-hidden rounded-t-2xl">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                />
-                <div className="absolute top-4 right-4">
-                  <span className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                    {item.category}
-                  </span>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-700">
+            {foodItems.length} Tiffin Items Available
+          </h2>
+          <p className="text-gray-600 mt-2">Click "Add to Cart" to add items to your cart</p>
+        </div>
 
-              <div className="p-5 sm:p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">
-                  {item.name}
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  {item.description}
-                </p>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-yellow-700">
-                    ₹{item.price}
-                  </span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleAddToCart(item)}
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
-                    >
-                      Add to Cart
-                    </button>
-                    <button
-                      onClick={() => handleOrder(item)}
-                      className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
-                    >
-                      Order Now
-                    </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          {foodItems.length > 0 ? (
+            foodItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+              >
+                <div className="relative h-48 sm:h-56 overflow-hidden rounded-t-2xl">
+                  <img
+                    src={item.image}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop';
+                    }}
+                  />
+                  <div className="absolute top-4 right-4">
+                    <span className="bg-gradient-to-r from-yellow-500 to-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                      {item.category}
+                    </span>
+                  </div>
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-yellow-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                      Tiffin
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+
+                <div className="p-5 sm:p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    {item.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {item.description}
+                  </p>
+                  
+                  {/* Seller and prep time info */}
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                    <span>By {item.sellerName}</span>
+                    <span>{item.preparationTime} mins</span>
+                  </div>
+
+                  {/* Rating */}
+                  {item.rating > 0 && (
+                    <div className="flex items-center mb-3">
+                      <div className="flex text-yellow-400">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-4 h-4 ${i < Math.floor(item.rating) ? 'fill-current' : 'text-gray-300'}`}
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-500 ml-1">({item.rating})</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-yellow-700">
+                      ₹{item.price}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAddToCart(item)}
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
+                      >
+                        Add to Cart
+                      </button>
+                      <button
+                        onClick={() => handleOrder(item)}
+                        className="bg-gradient-to-r from-yellow-500 to-orange-600 hover:from-yellow-600 hover:to-orange-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
+                      >
+                        Order Now
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <div className="text-6xl mb-4">🍽️</div>
+              <h3 className="text-2xl font-bold text-gray-700 mb-2">No Tiffin Items Available</h3>
+              <p className="text-gray-600 mb-4">Sellers haven't added any tiffin items yet.</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-lg transition-all duration-200 mr-2"
+              >
+                Refresh
+              </button>
+              <button
+                onClick={() => window.location.href = '/FoodItemsForm'}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-all duration-200"
+              >
+                Add Food Items
+              </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -456,6 +567,79 @@ const Tiffins: React.FC = () => {
         </div>
       )}
 
+      {/* Signup Popup */}
+      {showSignup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-800">Complete Your Order</h3>
+                <button
+                  onClick={() => setShowSignup(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleSignupSubmit} className="p-6 space-y-4">
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={signupForm.name}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email Address"
+                value={signupForm.email}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                required
+              />
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Phone Number"
+                value={signupForm.phone}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                required
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={signupForm.password}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                required
+              />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={signupForm.confirmPassword}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-500 focus:border-yellow-500"
+                required
+              />
+              
+              <button
+                type="submit"
+                className="w-full py-3 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors font-semibold"
+              >
+                Place Order
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -55,7 +55,7 @@ const Cart: React.FC = () => {
           {cartState.items.map((item) => (
             <div key={item.id} className="bg-white rounded-2xl shadow-lg p-6 flex items-center">
               <img
-                src={item.image}
+                src={item.imageUrl}
                 alt={item.name}
                 className="w-20 h-20 object-cover rounded-lg"
               />

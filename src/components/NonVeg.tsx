@@ -1,13 +1,25 @@
 import React, { useState, useEffect } from "react";
-import { useCart } from "../context/CartContext"; // Import the cart context
+import { useCart } from "../context/CartContext";
 
 interface FoodItem {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;
-  image: string;
+  imageUrl: string;
   category: string;
+  sellerName: string;
+  preparationTime: number;
+  rating: number;
+  isAvailable: boolean;
+}
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  imageUrl: string;
 }
 
 interface SignupForm {
@@ -30,82 +42,91 @@ const NonVeg: React.FC = () => {
     password: '',
     confirmPassword: ''
   });
+  const [loading, setLoading] = useState(true);
 
   // Use global cart context
   const { cartState, addToCart, updateQuantity, removeFromCart, clearCart, getTotalItems } = useCart();
 
+  // Default non-veg items as fallback
+  const defaultNonVegItems: FoodItem[] = [
+    {
+      id: "1",
+      name: "Chicken Biryani",
+      description: "Fragrant basmati rice with tender chicken and spices",
+      price: 320,
+      imageUrl: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
+      category: "Biryani",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 30,
+      rating: 4.6,
+      isAvailable: true
+    },
+    {
+      id: "2",
+      name: "Butter Chicken",
+      description: "Tender chicken in rich buttery tomato gravy",
+      price: 350,
+      imageUrl: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop",
+      category: "Curry",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 25,
+      rating: 4.5,
+      isAvailable: true
+    },
+    {
+      id: "3",
+      name: "Chicken Tikka Masala",
+      description: "Grilled chicken chunks in spiced creamy sauce",
+      price: 380,
+      imageUrl: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=400&h=300&fit=crop",
+      category: "Starter",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 20,
+      rating: 4.4,
+      isAvailable: true
+    }
+  ];
+
   useEffect(() => {
-    const fetchNonVegItems = () => {
-      const items: FoodItem[] = [
-        {
-          id: 1,
-          name: "Chicken Biryani",
-          description: "Fragrant basmati rice with tender chicken and spices",
-          price: 320,
-          image: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
-          category: "Biryani"
-        },
-        {
-          id: 2,
-          name: "Butter Chicken",
-          description: "Tender chicken in rich buttery tomato gravy",
-          price: 350,
-          image: "https://images.unsplash.com/photo-1603894584373-5ac82b2ae398?w=400&h=300&fit=crop",
-          category: "Curry"
-        },
-        {
-          id: 3,
-          name: "Chicken Tikka Masala",
-          description: "Grilled chicken chunks in spiced creamy sauce",
-          price: 380,
-          image: "https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=400&h=300&fit=crop",
-          category: "Starter"
-        },
-        {
-          id: 4,
-          name: "Mutton Rogan Josh",
-          description: "Kashmiri style mutton curry with aromatic spices",
-          price: 420,
-          image: "https://images.unsplash.com/photo-1594041680534-e8c8cdebd659?w=400&h=300&fit=crop",
-          category: "Curry"
-        },
-        {
-          id: 5,
-          name: "Fish Curry",
-          description: "Fresh fish cooked in tangy coconut gravy",
-          price: 280,
-          image: "https://images.unsplash.com/photo-1599084993091-1cb5c0721cc6?w=400&h=300&fit=crop",
-          category: "Seafood"
-        },
-        {
-          id: 6,
-          name: "Chicken Fried Rice",
-          description: "Stir-fried rice with chicken and vegetables",
-          price: 240,
-          image: "https://images.unsplash.com/photo-1603133872878-684f208fb84b?w=400&h=300&fit=crop",
-          category: "Chinese"
-        },
-        {
-          id: 7,
-          name: "Egg Curry",
-          description: "Boiled eggs in flavorful onion-tomato gravy",
-          price: 180,
-          image: "https://images.unsplash.com/photo-1586190848861-99aa4a171e90?w=400&h=300&fit=crop",
-          category: "Curry"
-        },
-        {
-          id: 8,
-          name: "Chicken Shawarma",
-          description: "Middle Eastern wrap with spiced chicken and sauces",
-          price: 200,
-          image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop",
-          category: "Wrap"
+    const loadFoodItems = () => {
+      try {
+        setLoading(true);
+        
+        // Get all food items from localStorage
+        const allFoodItems = JSON.parse(localStorage.getItem('foodItems') || '[]');
+        
+        // Filter only Non-Veg category items that are available
+        const nonVegItems = allFoodItems.filter((item: FoodItem) => 
+          item.category === 'Non-Veg' && item.isAvailable !== false
+        );
+
+        console.log('Loaded non-veg items from storage:', nonVegItems.length);
+        
+        // If no items in storage, use default items
+        if (nonVegItems.length > 0) {
+          setFoodItems(nonVegItems);
+        } else {
+          setFoodItems(defaultNonVegItems);
+          console.log('Using default non-veg items');
         }
-      ];
-      setFoodItems(items);
+
+      } catch (error) {
+        console.error('Error loading food items:', error);
+        setFoodItems(defaultNonVegItems);
+      } finally {
+        setLoading(false);
+      }
     };
 
-    fetchNonVegItems();
+    loadFoodItems();
+
+    // Listen for storage changes (when new items are added)
+    const handleStorageChange = () => {
+      loadFoodItems();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   const handleOrder = (item: FoodItem) => {
@@ -116,12 +137,12 @@ const NonVeg: React.FC = () => {
   const handleAddToCart = (item: FoodItem) => {
     // Convert to CartItem format for global cart
     const cartItem = {
-      id: item.id.toString(),
+      id: item.id,
       name: item.name,
       price: item.price,
       quantity: 1,
-      image: item.image,
-      category: item.category
+      imageUrl: item.imageUrl,
+      category: item.category || 'Non-Veg'
     };
     
     addToCart(cartItem);
@@ -235,6 +256,17 @@ const NonVeg: React.FC = () => {
     );
   };
 
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-red-800 font-semibold">Loading delicious non-vegetarian foods...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-100 relative overflow-hidden">
       {/* Cart Button */}
@@ -270,60 +302,135 @@ const NonVeg: React.FC = () => {
         <p className="text-lg md:text-xl text-gray-600 max-w-2xl mx-auto">
           Delicious and protein-rich non-vegetarian food made with premium ingredients
         </p>
+        
+        {/* Items count and source info */}
+        <div className="mt-4 flex justify-center items-center gap-4">
+          {foodItems.length > 0 && (
+            <>
+              <p className="text-sm text-red-600 bg-red-50 px-3 py-1 rounded-full">
+                🍗 {foodItems.length} non-veg items available
+              </p>
+              {foodItems.some(item => item.sellerName && item.sellerName !== 'FoodHome Kitchen') && (
+                <p className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                  🛍️ Items from multiple sellers
+                </p>
+              )}
+            </>
+          )}
+        </div>
       </div>
 
       {/* Food Grid */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 pb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-          {foodItems.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
-            >
-              <div className="relative h-48 sm:h-56 overflow-hidden rounded-t-2xl">
-                <img
-                  src={item.image}
-                  alt={item.name}
-                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
-                />
-                <div className="absolute top-4 right-4">
-                  <span className="bg-gradient-to-r from-red-500 to-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
-                    {item.category}
-                  </span>
-                </div>
-                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
-              </div>
+        <div className="text-center mb-8">
+          <h2 className="text-2xl font-bold text-gray-700">
+            {foodItems.length} Non-Vegetarian Dishes Available
+          </h2>
+          <p className="text-gray-600 mt-2">Click "Add to Cart" to add items to your cart</p>
+        </div>
 
-              <div className="p-5 sm:p-6">
-                <h3 className="text-xl font-bold text-gray-800 mb-2">
-                  {item.name}
-                </h3>
-                <p className="text-gray-600 text-sm mb-4">
-                  {item.description}
-                </p>
-                
-                <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-red-700">
-                    ₹{item.price}
-                  </span>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => handleAddToCart(item)}
-                      className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
-                    >
-                      Add to Cart
-                    </button>
-                    <button
-                      onClick={() => handleOrder(item)}
-                      className="bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
-                    >
-                      Order Now
-                    </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
+          {foodItems.length > 0 ? (
+            foodItems.map((item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2"
+              >
+                <div className="relative h-48 sm:h-56 overflow-hidden rounded-t-2xl">
+                  <img
+                    src={item.imageUrl}
+                    alt={item.name}
+                    className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop';
+                    }}
+                  />
+                  <div className="absolute top-4 right-4">
+                    <span className="bg-gradient-to-r from-red-500 to-orange-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
+                      {item.category}
+                    </span>
+                  </div>
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-red-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                      Non-Veg
+                    </span>
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
+                </div>
+
+                <div className="p-5 sm:p-6">
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">
+                    {item.name}
+                  </h3>
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                    {item.description}
+                  </p>
+                  
+                  {/* Seller and prep time info */}
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                    <span>By {item.sellerName}</span>
+                    <span>{item.preparationTime} mins</span>
+                  </div>
+
+                  {/* Rating */}
+                  {item.rating > 0 && (
+                    <div className="flex items-center mb-3">
+                      <div className="flex text-yellow-400">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-4 h-4 ${i < Math.floor(item.rating) ? 'fill-current' : 'text-gray-300'}`}
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-500 ml-1">({item.rating})</span>
+                    </div>
+                  )}
+                  
+                  <div className="flex items-center justify-between">
+                    <span className="text-2xl font-bold text-red-700">
+                      ₹{item.price}
+                    </span>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleAddToCart(item)}
+                        className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
+                      >
+                        Add to Cart
+                      </button>
+                      <button
+                        onClick={() => handleOrder(item)}
+                        className="bg-gradient-to-r from-red-500 to-orange-600 hover:from-red-600 hover:to-orange-700 text-white px-4 py-2 rounded-full font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 text-sm"
+                      >
+                        Order Now
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-12">
+              <div className="text-6xl mb-4">🍗</div>
+              <h3 className="text-2xl font-bold text-gray-700 mb-2">No Non-Vegetarian Items Available</h3>
+              <p className="text-gray-600 mb-4">Sellers haven't added any non-veg items yet.</p>
+              <button
+                onClick={() => window.location.reload()}
+                className="bg-red-500 hover:bg-red-600 text-white px-6 py-2 rounded-lg transition-all duration-200 mr-2"
+              >
+                Refresh
+              </button>
+              <button
+                onClick={() => window.location.href = '/FoodItemsForm'}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-all duration-200"
+              >
+                Add Food Items
+              </button>
             </div>
-          ))}
+          )}
         </div>
       </div>
 
@@ -366,7 +473,7 @@ const NonVeg: React.FC = () => {
                   {cartState.items.map((item) => (
                     <div key={item.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200">
                       <img
-                        src={item.image}
+                        src={item.imageUrl}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg"
                       />
@@ -448,6 +555,80 @@ const NonVeg: React.FC = () => {
                 </button>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Signup Popup */}
+      {showSignup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-800">Complete Your Order</h3>
+                <button
+                  onClick={() => setShowSignup(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleSignupSubmit} className="p-6 space-y-4">
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={signupForm.name}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email Address"
+                value={signupForm.email}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                required
+              />
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Phone Number"
+                value={signupForm.phone}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                required
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={signupForm.password}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                required
+              />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={signupForm.confirmPassword}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500"
+                required
+              />
+              
+              <button
+                type="submit"
+                className="w-full py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-semibold"
+              >
+                Place Order
+              </button>
+            </form>
           </div>
         </div>
       )}

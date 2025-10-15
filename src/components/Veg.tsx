@@ -1,24 +1,26 @@
 // src/components/Veg.tsx
 import React, { useState, useEffect } from "react";
-import { productService, Product } from '../services/productService';
-import { useCart } from '../context/CartContext'; // ✅ ADD THIS IMPORT
+import { useCart } from '../context/CartContext';
 
 interface FoodItem {
-  id: number;
+  id: string;
   name: string;
   description: string;
   price: number;
-  image: string;
+  imageUrl: string;
   category: string;
+  sellerName: string;
+  preparationTime: number;
+  rating: number;
+  isAvailable: boolean;
 }
 
 interface CartItem {
-  id: number;
+  id: string;
   name: string;
   price: number;
   quantity: number;
-  type: string;
-  image: string;
+  imageUrl: string;
 }
 
 interface SignupForm {
@@ -29,38 +31,8 @@ interface SignupForm {
   confirmPassword: string;
 }
 
-interface OrderItem {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  type: string;
-}
-
-interface Order {
-  id: number;
-  customerName: string;
-  customerEmail: string;
-  customerPhone: string;
-  items: OrderItem[];
-  totalAmount: number;
-  status: 'pending' | 'preparing' | 'ready' | 'completed' | 'cancelled';
-  timestamp: string;
-  sellerId?: number;
-}
-
-interface Notification {
-  id: number;
-  type: 'new_order' | 'status_update' | 'system';
-  message: string;
-  timestamp: string;
-  read: boolean;
-  orderId?: number;
-}
-
 const Veg: React.FC = () => {
   const [foodItems, setFoodItems] = useState<FoodItem[]>([]);
-  const [dbProducts, setDbProducts] = useState<Product[]>([]);
   const [showSignup, setShowSignup] = useState(false);
   const [currentItem, setCurrentItem] = useState<FoodItem | null>(null);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -73,173 +45,101 @@ const Veg: React.FC = () => {
     confirmPassword: ''
   });
   const [loading, setLoading] = useState(true);
-  const [dbError, setDbError] = useState(false); // ✅ NEW: Track database error
 
-  // ✅ ADD THIS LINE - Global cart context
+  // Global cart context
   const { addToCart: addToGlobalCart, getTotalItems } = useCart();
 
-  // ✅ IMPROVED: Default veg items
+  // Default veg items as fallback
   const defaultVegItems: FoodItem[] = [
     {
-      id: 1,
+      id: "1",
       name: "Paneer Butter Masala",
       description: "Cottage cheese in rich tomato gravy with butter and cream",
       price: 280,
-      image: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop",
-      category: "Main Course"
+      imageUrl: "https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop",
+      category: "Main Course",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 25,
+      rating: 4.5,
+      isAvailable: true
     },
     {
-      id: 2,
+      id: "2",
       name: "Aloo Paratha",
       description: "Whole wheat bread stuffed with spiced potatoes, served with curd",
       price: 120,
-      image: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
-      category: "Bread"
+      imageUrl: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
+      category: "Bread",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 15,
+      rating: 4.3,
+      isAvailable: true
     },
     {
-      id: 3,
+      id: "3",
       name: "Vegetable Biryani",
       description: "Fragrant basmati rice cooked with fresh vegetables and aromatic spices",
       price: 220,
-      image: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400&h=300&fit=crop",
-      category: "Rice Dish"
-    },
-    {
-      id: 4,
-      name: "Dal Makhani",
-      description: "Creamy black lentils slow-cooked with butter and spices",
-      price: 180,
-      image: "https://images.unsplash.com/photo-1585937421612-70ca4e89d68e?w=400&h=300&fit=crop",
-      category: "Curry"
-    },
-    {
-      id: 5,
-      name: "Masala Dosa",
-      description: "Crispy rice crepe filled with spiced potatoes, served with sambar",
-      price: 150,
-      image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop",
-      category: "South Indian"
-    },
-    {
-      id: 6,
-      name: "Chole Bhature",
-      description: "Spicy chickpeas curry served with fluffy fried bread",
-      price: 160,
-      image: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
-      category: "North Indian"
-    },
-    {
-      id: 7,
-      name: "Vegetable Fried Rice",
-      description: "Stir-fried rice with mixed vegetables and soy sauce",
-      price: 190,
-      image: "https://images.unsplash.com/photo-1512058564366-18510be2db19?w=400&h=300&fit=crop",
-      category: "Chinese"
-    },
-    {
-      id: 8,
-      name: "Gulab Jamun",
-      description: "Sweet milk dumplings soaked in rose-flavored sugar syrup",
-      price: 100,
-      image: "https://images.unsplash.com/photo-1563724292870-7e44e61a4b98?w=400&h=300&fit=crop",
-      category: "Dessert"
+      imageUrl: "https://images.unsplash.com/photo-1589302168068-964664d93dc0?w=400&h=300&fit=crop",
+      category: "Rice Dish",
+      sellerName: "FoodHome Kitchen",
+      preparationTime: 30,
+      rating: 4.6,
+      isAvailable: true
     }
   ];
 
-  // ✅ IMPROVED: Fetch products from database with better error handling
+  // Load food items from localStorage
   useEffect(() => {
-    const fetchProducts = async () => {
+    const loadFoodItems = () => {
       try {
         setLoading(true);
-        setDbError(false);
         
-        const response = await productService.getProducts('veg');
-        console.log('Database response:', response); // Debug log
+        // Get all food items from localStorage
+        const allFoodItems = JSON.parse(localStorage.getItem('foodItems') || '[]');
         
-        if (response && response.success && response.products) {
-          setDbProducts(response.products);
-          
-          // Convert database products to FoodItem format
-          const convertedProducts: FoodItem[] = response.products.map(product => ({
-            id: product.id,
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            image: product.image_url || 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop',
-            category: product.category || 'Main Course'
-          }));
-          
-          setFoodItems(convertedProducts);
-          console.log('Loaded from database:', convertedProducts.length, 'items');
+        // Filter only Veg category items that are available
+        const vegItems = allFoodItems.filter((item: FoodItem) => 
+          item.category === 'Veg' && item.isAvailable !== false
+        );
+
+        console.log('Loaded veg items from storage:', vegItems.length);
+        
+        // If no items in storage, use default items
+        if (vegItems.length > 0) {
+          setFoodItems(vegItems);
         } else {
-          // If database fails, use default items
-          throw new Error('Database response not valid');
+          setFoodItems(defaultVegItems);
+          console.log('Using default veg items');
         }
+
+        // Load cart from localStorage
+        const savedCart = localStorage.getItem('vegCart');
+        if (savedCart) {
+          setCartItems(JSON.parse(savedCart));
+        }
+
       } catch (error) {
-        console.error('Error fetching products:', error);
-        setDbError(true);
-        // Use default items if database fails
+        console.error('Error loading food items:', error);
         setFoodItems(defaultVegItems);
-        console.log('Using default items:', defaultVegItems.length, 'items');
       } finally {
         setLoading(false);
       }
     };
 
-    // Load cart from localStorage
-    const savedCart = localStorage.getItem('vegCart');
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
-    }
+    loadFoodItems();
 
-    fetchProducts();
+    // Listen for storage changes (when new items are added)
+    const handleStorageChange = () => {
+      loadFoodItems();
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
   // Calculate total amount
   const totalAmount = cartItems.reduce((total, item) => total + (item.price * item.quantity), 0);
-
-  // ✅ NEW FUNCTION: Save order to system for sellers
-  const saveOrderToSystem = () => {
-    const existingOrders = JSON.parse(localStorage.getItem('orders') || '[]');
-    
-    const newOrder: Order = {
-      id: Date.now(),
-      customerName: signupForm.name,
-      customerEmail: signupForm.email,
-      customerPhone: signupForm.phone,
-      items: cartItems.length > 0 ? cartItems.map(item => ({
-        id: item.id,
-        name: item.name,
-        price: item.price,
-        quantity: item.quantity,
-        type: item.type
-      })) : [{
-        id: currentItem?.id || 0,
-        name: currentItem?.name || '',
-        price: currentItem?.price || 0,
-        quantity: 1,
-        type: 'veg'
-      }],
-      totalAmount: totalAmount,
-      status: 'pending',
-      timestamp: new Date().toISOString()
-    };
-    
-    existingOrders.push(newOrder);
-    localStorage.setItem('orders', JSON.stringify(existingOrders));
-    
-    // Create notification for sellers
-    const notifications = JSON.parse(localStorage.getItem('sellerNotifications') || '[]');
-    notifications.push({
-      id: Date.now(),
-      type: 'new_order',
-      message: `🆕 New order #${newOrder.id} from ${signupForm.name} - ₹${totalAmount}`,
-      timestamp: new Date().toISOString(),
-      read: false,
-      orderId: newOrder.id
-    });
-    localStorage.setItem('sellerNotifications', JSON.stringify(notifications));
-  };
 
   const handleOrder = (item: FoodItem) => {
     setCurrentItem(item);
@@ -265,8 +165,7 @@ const Veg: React.FC = () => {
         name: item.name,
         price: item.price,
         quantity: 1,
-        type: 'veg',
-        image: item.image
+        imageUrl: item.imageUrl
       };
       updatedCart = [...cartItems, newCartItem];
     }
@@ -274,22 +173,22 @@ const Veg: React.FC = () => {
     setCartItems(updatedCart);
     localStorage.setItem('vegCart', JSON.stringify(updatedCart));
     
-    // ✅ ADD THIS: Global cart lo kuda add chey
+    // ✅ FIXED: Add to global cart with correct object structure
     const globalCartItem = {
-      id: item.id.toString(),
-      name: item.name,
-      price: item.price,
-      quantity: 1,
-      image: item.image,
-      category: 'veg'
-    };
-    addToGlobalCart(globalCartItem);
+  id: item.id,
+  name: item.name,
+  price: item.price,
+  quantity: 1,
+  imageUrl: item.imageUrl,
+  category: item.category || 'Veg'
+};
+addToGlobalCart(globalCartItem);
     
     // Auto open cart popup after adding item
     setShowCart(true);
   };
 
-  const updateCartQuantity = (itemId: number, newQuantity: number) => {
+   const updateCartQuantity = (itemId: string, newQuantity: number) => {
     if (newQuantity < 1) {
       // Remove item if quantity is 0
       const updatedCart = cartItems.filter(item => item.id !== itemId);
@@ -305,7 +204,7 @@ const Veg: React.FC = () => {
     }
   };
 
-  const removeFromCart = (itemId: number) => {
+  const removeFromCart = (itemId: string) => {
     const updatedCart = cartItems.filter(item => item.id !== itemId);
     setCartItems(updatedCart);
     localStorage.setItem('vegCart', JSON.stringify(updatedCart));
@@ -314,7 +213,7 @@ const Veg: React.FC = () => {
   const clearCart = () => {
     setCartItems([]);
     localStorage.removeItem('vegCart');
-    setShowCart(false); // Close cart after clearing
+    setShowCart(false);
   };
 
   const handleSignupSubmit = (e: React.FormEvent) => {
@@ -337,9 +236,6 @@ const Veg: React.FC = () => {
 
     localStorage.setItem('userData', JSON.stringify(userData));
     
-    // ✅ CALL THE NEW FUNCTION TO SAVE ORDER FOR SELLERS
-    saveOrderToSystem();
-    
     // Handle order from cart or single item
     if (cartItems.length > 0) {
       // Order all cart items
@@ -351,7 +247,7 @@ const Veg: React.FC = () => {
       };
       localStorage.setItem('lastOrder', JSON.stringify(orderData));
       alert(`🎉 Welcome ${signupForm.name}! Your order for ${cartItems.length} items has been placed successfully!`);
-      clearCart(); // Clear cart after successful order
+      clearCart();
     } else if (currentItem) {
       // Single item order
       const orderData = {
@@ -421,14 +317,13 @@ const Veg: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-green-100 relative overflow-hidden">
-      {/* Cart Button - ✅ MODIFIED: Global cart count show chey */}
+      {/* Cart Button */}
       <div className="fixed top-4 right-4 z-40">
         <button
           onClick={() => setShowCart(true)}
           className="bg-gradient-to-r from-orange-500 to-red-500 text-white p-4 rounded-full shadow-2xl hover:shadow-3xl transform hover:scale-110 transition-all duration-300 flex items-center gap-2"
         >
           <span className="text-xl">🛒</span>
-          {/* ✅ CHANGED: Global cart count use chey */}
           <span className="bg-white text-orange-500 rounded-full w-6 h-6 flex items-center justify-center text-sm font-bold">
             {getTotalItems()}
           </span>
@@ -454,30 +349,25 @@ const Veg: React.FC = () => {
           Fresh, healthy, and delicious vegetarian food made with love and traditional recipes
         </p>
         
-        {/* ✅ IMPROVED: Database status display */}
+        {/* Items count and source info */}
         <div className="mt-4 flex justify-center items-center gap-4">
-          {dbProducts.length > 0 ? (
-            <p className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
-              🗃️ Connected to database - {dbProducts.length} items loaded
-            </p>
-          ) : dbError ? (
-            <p className="text-sm text-orange-600 bg-orange-50 px-3 py-1 rounded-full">
-              ⚠️ Using demo items - Database connection failed
-            </p>
-          ) : (
-            <p className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
-              📱 Demo vegetarian items loaded
-            </p>
+          {foodItems.length > 0 && (
+            <>
+              <p className="text-sm text-green-600 bg-green-50 px-3 py-1 rounded-full">
+                🍃 {foodItems.length} vegetarian items available
+              </p>
+              {foodItems.some(item => item.sellerName && item.sellerName !== 'FoodHome Kitchen') && (
+                <p className="text-sm text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                  🛍️ Items from multiple sellers
+                </p>
+              )}
+            </>
           )}
-          <p className="text-sm text-gray-600">
-            Showing {foodItems.length} delicious items
-          </p>
         </div>
       </div>
 
       {/* Food Grid */}
       <div className="relative z-10 max-w-7xl mx-auto px-4 pb-12">
-        {/* ✅ ADDED: Items count header */}
         <div className="text-center mb-8">
           <h2 className="text-2xl font-bold text-gray-700">
             {foodItems.length} Vegetarian Dishes Available
@@ -494,17 +384,21 @@ const Veg: React.FC = () => {
               >
                 <div className="relative h-48 sm:h-56 overflow-hidden rounded-t-2xl">
                   <img
-                    src={item.image}
+                    src={item.imageUrl}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                     onError={(e) => {
-                      // Fallback image if original fails
                       e.currentTarget.src = 'https://images.unsplash.com/photo-1565557623262-b51c2513a641?w=400&h=300&fit=crop';
                     }}
                   />
                   <div className="absolute top-4 right-4">
                     <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white px-3 py-1 rounded-full text-sm font-semibold shadow-lg">
                       {item.category}
+                    </span>
+                  </div>
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-green-500 text-white px-2 py-1 rounded-full text-xs font-medium">
+                      Veg
                     </span>
                   </div>
                   <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent"></div>
@@ -514,9 +408,33 @@ const Veg: React.FC = () => {
                   <h3 className="text-xl font-bold text-gray-800 mb-2">
                     {item.name}
                   </h3>
-                  <p className="text-gray-600 text-sm mb-4">
+                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
                     {item.description}
                   </p>
+                  
+                  {/* Seller and prep time info */}
+                  <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
+                    <span>By {item.sellerName}</span>
+                    <span>{item.preparationTime} mins</span>
+                  </div>
+
+                  {/* Rating */}
+                  {item.rating > 0 && (
+                    <div className="flex items-center mb-3">
+                      <div className="flex text-yellow-400">
+                        {[...Array(5)].map((_, i) => (
+                          <svg
+                            key={i}
+                            className={`w-4 h-4 ${i < Math.floor(item.rating) ? 'fill-current' : 'text-gray-300'}`}
+                            viewBox="0 0 20 20"
+                          >
+                            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                          </svg>
+                        ))}
+                      </div>
+                      <span className="text-xs text-gray-500 ml-1">({item.rating})</span>
+                    </div>
+                  )}
                   
                   <div className="flex items-center justify-between">
                     <span className="text-2xl font-bold text-green-700">
@@ -541,25 +459,181 @@ const Veg: React.FC = () => {
               </div>
             ))
           ) : (
-            // ✅ ADDED: Fallback when no items
             <div className="col-span-full text-center py-12">
               <div className="text-6xl mb-4">🍃</div>
-              <h3 className="text-2xl font-bold text-gray-700 mb-2">No Vegetarian Items Found</h3>
-              <p className="text-gray-600">Please check your database connection or try refreshing the page.</p>
+              <h3 className="text-2xl font-bold text-gray-700 mb-2">No Vegetarian Items Available</h3>
+              <p className="text-gray-600 mb-4">Sellers haven't added any vegetarian items yet.</p>
               <button
                 onClick={() => window.location.reload()}
-                className="mt-4 bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all duration-200"
+                className="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded-lg transition-all duration-200 mr-2"
               >
-                Refresh Page
+                Refresh
+              </button>
+              <button
+                onClick={() => window.location.href = '/FoodItemsForm'}
+                className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-2 rounded-lg transition-all duration-200"
+              >
+                Add Food Items
               </button>
             </div>
           )}
         </div>
       </div>
 
-      {/* Rest of your existing code for Cart Popup and Signup Modal remains same */}
-      {/* ... (Cart Popup code) ... */}
-      {/* ... (Signup Popup code) ... */}
+      {/* Cart Popup */}
+      {showCart && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full max-h-[80vh] overflow-hidden">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-800">Your Cart</h3>
+                <button
+                  onClick={() => setShowCart(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 overflow-y-auto max-h-96">
+              {cartItems.length === 0 ? (
+                <p className="text-gray-500 text-center py-8">Your cart is empty</p>
+              ) : (
+                cartItems.map((item) => (
+                  <div key={item.id} className="flex items-center justify-between py-3 border-b">
+                    <div className="flex items-center space-x-3">
+                      <img src={item.imageUrl} alt={item.name} className="w-12 h-12 rounded-lg object-cover" />
+                      <div>
+                        <p className="font-semibold text-gray-800">{item.name}</p>
+                        <p className="text-green-600 font-bold">₹{item.price}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => updateCartQuantity(item.id, item.quantity - 1)}
+                        className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center font-semibold">{item.quantity}</span>
+                      <button
+                        onClick={() => updateCartQuantity(item.id, item.quantity + 1)}
+                        className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center hover:bg-gray-300"
+                      >
+                        +
+                      </button>
+                      <button
+                        onClick={() => removeFromCart(item.id)}
+                        className="ml-2 text-red-500 hover:text-red-700"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+            
+            {cartItems.length > 0 && (
+              <div className="p-6 border-t">
+                <div className="flex justify-between items-center mb-4">
+                  <span className="text-lg font-semibold">Total:</span>
+                  <span className="text-xl font-bold text-green-700">₹{totalAmount}</span>
+                </div>
+                <div className="flex space-x-3">
+                  <button
+                    onClick={clearCart}
+                    className="flex-1 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors"
+                  >
+                    Clear Cart
+                  </button>
+                  <button
+                    onClick={() => setShowSignup(true)}
+                    className="flex-1 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                  >
+                    Checkout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Signup Popup */}
+      {showSignup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full">
+            <div className="p-6 border-b">
+              <div className="flex justify-between items-center">
+                <h3 className="text-xl font-bold text-gray-800">Complete Your Order</h3>
+                <button
+                  onClick={() => setShowSignup(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+            
+            <form onSubmit={handleSignupSubmit} className="p-6 space-y-4">
+              <input
+                type="text"
+                name="name"
+                placeholder="Full Name"
+                value={signupForm.name}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                required
+              />
+              <input
+                type="email"
+                name="email"
+                placeholder="Email Address"
+                value={signupForm.email}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                required
+              />
+              <input
+                type="tel"
+                name="phone"
+                placeholder="Phone Number"
+                value={signupForm.phone}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                required
+              />
+              <input
+                type="password"
+                name="password"
+                placeholder="Password"
+                value={signupForm.password}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                required
+              />
+              <input
+                type="password"
+                name="confirmPassword"
+                placeholder="Confirm Password"
+                value={signupForm.confirmPassword}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500"
+                required
+              />
+              
+              <button
+                type="submit"
+                className="w-full py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-semibold"
+              >
+                Place Order
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

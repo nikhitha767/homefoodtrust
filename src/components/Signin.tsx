@@ -1,21 +1,26 @@
 // src/components/SignIn.tsx
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 interface SignInForm {
   email: string;
   password: string;
+  name?: string; // For registration
 }
 
 const SignIn: React.FC = () => {
   const [formData, setFormData] = useState<SignInForm>({
     email: '',
-    password: ''
+    password: '',
+    name: ''
   });
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false); // Toggle between login/signup
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -33,25 +38,53 @@ const SignIn: React.FC = () => {
       // Simulate API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Save user data to localStorage
-      const userData = {
-        email: formData.email,
-        isLoggedIn: true,
-        loginTime: new Date().toISOString(),
-        rememberMe: rememberMe
-      };
-      
-      localStorage.setItem('userData', JSON.stringify(userData));
-      localStorage.setItem('isAuthenticated', 'true');
-      
-      // Show success message
-      alert('🎉 Login successful! Welcome back!');
+      if (isSignUp) {
+        // Registration logic
+        const userData = {
+          id: Math.random().toString(36).substr(2, 9), // Generate random ID
+          name: formData.name || formData.email.split('@')[0],
+          email: formData.email,
+        };
+        
+        // Save to localStorage for persistence
+        const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        const newUser = {
+          ...userData,
+          password: formData.password, // In real app, this should be hashed
+          createdAt: new Date().toISOString()
+        };
+        users.push(newUser);
+        localStorage.setItem('registeredUsers', JSON.stringify(users));
+        
+        login(userData);
+        alert('🎉 Registration successful! Welcome to FoodHome!');
+      } else {
+        // Login logic - Check if user exists
+        const users = JSON.parse(localStorage.getItem('registeredUsers') || '[]');
+        const user = users.find((u: any) => u.email === formData.email && u.password === formData.password);
+        
+        if (user) {
+          const userData = {
+            id: user.id,
+            name: user.name,
+            email: user.email,
+          };
+          login(userData);
+          alert('🎉 Login successful! Welcome back!');
+        } else {
+          throw new Error('Invalid credentials');
+        }
+      }
       
       // Redirect to home page
-      navigate('/Homebody.tsx');
+      navigate('/home');
       
     } catch (error) {
-      alert('❌ Login failed. Please check your credentials.');
+      if (isSignUp) {
+        alert('❌ Registration failed. Please try again.');
+      } else {
+        alert('❌ Login failed. Please check your credentials or register.');
+      }
     } finally {
       setLoading(false);
     }
@@ -65,6 +98,11 @@ const SignIn: React.FC = () => {
     alert(`🔐 ${provider} login would be implemented here!`);
   };
 
+  const toggleMode = () => {
+    setIsSignUp(!isSignUp);
+    setFormData({ email: '', password: '', name: '' });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
@@ -76,16 +114,43 @@ const SignIn: React.FC = () => {
             </svg>
           </div>
           <h2 className="text-3xl font-extrabold text-gray-900">
-            Welcome Back
+            {isSignUp ? 'Create Account' : 'Welcome Back'}
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            Sign in to your FoodHome account
+            {isSignUp ? 'Join FoodHome today' : 'Sign in to your FoodHome account'}
           </p>
         </div>
 
         {/* Main Form Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6 transform transition-all duration-300 hover:shadow-2xl">
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Name Input - Only for Sign Up */}
+            {isSignUp && (
+              <div>
+                <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
+                  Full Name
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    autoComplete="name"
+                    required={isSignUp}
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    className="block w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+              </div>
+            )}
+
             {/* Email Input */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
@@ -126,12 +191,13 @@ const SignIn: React.FC = () => {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
+                  autoComplete={isSignUp ? "new-password" : "current-password"}
                   required
                   value={formData.password}
                   onChange={handleInputChange}
                   className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
-                  placeholder="Enter your password"
+                  placeholder={isSignUp ? "Create a password" : "Enter your password"}
+                  minLength={6}
                 />
                 <button
                   type="button"
@@ -147,34 +213,41 @@ const SignIn: React.FC = () => {
                   </svg>
                 </button>
               </div>
+              {isSignUp && (
+                <p className="mt-1 text-xs text-gray-500">
+                  Password must be at least 6 characters long
+                </p>
+              )}
             </div>
 
-            {/* Remember Me & Forgot Password */}
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                  Remember me
-                </label>
+            {/* Remember Me & Forgot Password - Only for Login */}
+            {!isSignUp && (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
+                    Remember me
+                  </label>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleForgotPassword}
+                  className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"
+                >
+                  Forgot password?
+                </button>
               </div>
+            )}
 
-              <button
-                type="button"
-                onClick={handleForgotPassword}
-                className="text-sm font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"
-              >
-                Forgot password?
-              </button>
-            </div>
-
-            {/* Sign In Button */}
+            {/* Submit Button */}
             <button
               type="submit"
               disabled={loading}
@@ -183,14 +256,14 @@ const SignIn: React.FC = () => {
               {loading ? (
                 <div className="flex items-center">
                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                  Signing in...
+                  {isSignUp ? 'Creating Account...' : 'Signing in...'}
                 </div>
               ) : (
                 <div className="flex items-center">
                   <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                   </svg>
-                  Sign In
+                  {isSignUp ? 'Create Account' : 'Sign In'}
                 </div>
               )}
             </button>
@@ -233,16 +306,17 @@ const SignIn: React.FC = () => {
           </div>
         </div>
 
-        {/* Sign Up Link */}
+        {/* Toggle between Login and Sign Up */}
         <div className="text-center">
           <p className="text-sm text-gray-600">
-            Don't have an account?{' '}
-            <Link 
-              to="/signup" 
+            {isSignUp ? 'Already have an account?' : "Don't have an account?"}{' '}
+            <button
+              type="button"
+              onClick={toggleMode}
               className="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-200"
             >
-              Sign up now
-            </Link>
+              {isSignUp ? 'Sign in' : 'Sign up now'}
+            </button>
           </p>
         </div>
       </div>
