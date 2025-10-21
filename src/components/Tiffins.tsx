@@ -7,7 +7,7 @@ interface FoodItem {
   name: string;
   description: string;
   price: number;
-  image: string;
+  imageUrl: string;
   category: string;
   sellerName: string;
   preparationTime: number;
@@ -47,7 +47,7 @@ const Tiffins: React.FC = () => {
       name: "Idli Sambar",
       description: "Soft rice cakes with lentil soup and coconut chutney",
       price: 60,
-      image: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1631452180519-c014fe946bc7?w=400&h=300&fit=crop",
       category: "Breakfast",
       sellerName: "FoodHome Kitchen",
       preparationTime: 15,
@@ -59,7 +59,7 @@ const Tiffins: React.FC = () => {
       name: "Masala Dosa",
       description: "Crispy crepe with spiced potato filling and chutneys",
       price: 80,
-      image: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=400&h=300&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1668236543090-82eba5ee5976?w=400&h=300&fit=crop",
       category: "Breakfast",
       sellerName: "FoodHome Kitchen",
       preparationTime: 20,
@@ -71,7 +71,7 @@ const Tiffins: React.FC = () => {
       name: "Pongal",
       description: "Comforting rice and lentil dish with ghee and spices",
       price: 70,
-      image: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1589647363585-f4a7d3877b10?w=400&h=300&fit=crop",
       category: "Breakfast",
       sellerName: "FoodHome Kitchen",
       preparationTime: 25,
@@ -83,7 +83,7 @@ const Tiffins: React.FC = () => {
       name: "Upma",
       description: "Savory semolina porridge with vegetables and spices",
       price: 50,
-      image: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
+      imageUrl: "https://images.unsplash.com/photo-1563379091339-03246963d96c?w=400&h=300&fit=crop",
       category: "Breakfast",
       sellerName: "FoodHome Kitchen",
       preparationTime: 15,
@@ -149,7 +149,7 @@ const Tiffins: React.FC = () => {
       name: item.name,
       price: item.price,
       quantity: 1,
-      image: item.image,
+      imageUrl: item.imageUrl,
       category: item.category || 'tiffins'
     };
     
@@ -346,7 +346,7 @@ const Tiffins: React.FC = () => {
               >
                 <div className="relative h-48 sm:h-56 overflow-hidden rounded-t-2xl">
                   <img
-                    src={item.image}
+                    src={item.imageUrl}
                     alt={item.name}
                     className="w-full h-full object-cover transition-transform duration-300 hover:scale-110"
                     onError={(e) => {
@@ -481,7 +481,7 @@ const Tiffins: React.FC = () => {
                   {cartState.items.map((item) => (
                     <div key={item.id} className="flex items-center gap-4 p-4 border border-gray-200 rounded-lg hover:shadow-md transition-all duration-200">
                       <img
-                        src={item.image}
+                        src={item.imageUrl}
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg"
                       />

@@ -1,4 +1,4 @@
-// src/components/FoodItemsForm.tsx - COMPLETE UPDATED VERSION
+// src/components/FoodItemsForm.tsx - UPDATED WITH BACK BUTTON
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -128,10 +128,11 @@ const FoodItemForm: React.FC = () => {
     setFoodItem(prev => ({ ...prev, category }));
   };
 
+  // CORRECTED: Save handler - Seller Dashboard ki redirect avuthundi
   const handleSave = async () => {
     if (!user) {
       showToast('Please sign in to add food items', 'error');
-      navigate('/');
+      navigate('/seller-login');
       return;
     }
 
@@ -160,7 +161,7 @@ const FoodItemForm: React.FC = () => {
       const newFoodItem = {
         id: Math.random().toString(36).substr(2, 9),
         ...foodItem,
-        sellerId: user.id,
+        sellerId: user.id.toString(),
         sellerName: user.name,
         isAvailable: true,
         // Ensure imageUrl is properly set (either base64 or URL)
@@ -176,9 +177,9 @@ const FoodItemForm: React.FC = () => {
 
       showToast(`"${foodItem.itemName}" added to ${foodItem.category} menu! 🎉`, 'success');
       
-      // Redirect to the respective category page after save
+      // CORRECTED: Redirect to seller dashboard after save
       setTimeout(() => {
-        navigate(`/${foodItem.category.toLowerCase()}`);
+        navigate('/seller-dashboard');
         setIsSubmitting(false);
       }, 1500);
       
@@ -205,6 +206,11 @@ const FoodItemForm: React.FC = () => {
       fileInputRef.current.value = '';
     }
     showToast('Form cleared', 'info');
+  };
+
+  // ADDED: Back to Dashboard handler
+  const handleBackToDashboard = () => {
+    navigate('/seller-dashboard');
   };
 
   const triggerFileInput = () => {
@@ -234,7 +240,7 @@ const FoodItemForm: React.FC = () => {
           <h2 className="text-2xl font-bold text-gray-900 mb-4">Seller Access Required</h2>
           <p className="text-gray-600 mb-6">Please sign in as a seller to add food items</p>
           <button 
-            onClick={() => navigate('/')}
+            onClick={() => navigate('/seller-login')}
             className="bg-orange-500 text-white px-6 py-3 rounded-lg hover:bg-orange-600 transition-colors font-semibold"
           >
             Sign In as Seller
@@ -289,6 +295,19 @@ const FoodItemForm: React.FC = () => {
       )}
 
       <div className="max-w-6xl mx-auto">
+        {/* ADDED: Back to Dashboard Button */}
+        <div className="mb-6">
+          <button
+            onClick={handleBackToDashboard}
+            className="flex items-center space-x-2 text-orange-600 hover:text-orange-700 font-semibold transition-colors duration-200 bg-white px-4 py-2 rounded-lg shadow-md hover:shadow-lg"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Dashboard</span>
+          </button>
+        </div>
+
         <div className="bg-white rounded-3xl shadow-2xl overflow-hidden transform hover:shadow-2xl transition-all duration-300">
           {/* Header with Animated Gradient */}
           <div className="bg-gradient-to-r from-orange-500 via-red-500 to-pink-500 p-8 relative overflow-hidden">
