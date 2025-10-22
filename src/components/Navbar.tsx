@@ -276,7 +276,8 @@ export default function Navbar({
           <div className="hidden md:flex items-center space-x-4">
             {/* Seller Button */}
             <button 
-              onClick={handleSellerClick}
+              
+               onClick={() => handleNavigation('/Login')}
               className="flex items-center space-x-1 px-3 py-2 text-gray-600 hover:text-blue-600 transition-colors duration-200"
               title={isSeller ? "Seller Dashboard" : "Seller Login"}
             >

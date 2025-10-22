@@ -15,6 +15,8 @@ import FoodItemForm from './components/FoodItemForm';
 import Sandwich from './components/Sandwich';
 import { AuthProvider } from './context/AuthContext';
 import MyProfile from './components/MyProfile';
+import Login from './components/login/Login';
+import SellerRegistration from './components/login/Register';
 
 // AppContent component should be inside Router
 const AppContent: React.FC = () => {
@@ -38,6 +40,9 @@ const AppContent: React.FC = () => {
         <Route path="/sandwich" element={<Sandwich />} />
         <Route path="*" element={<HomeBody />} />
         <Route path="/profile" element={<MyProfile />} />
+         <Route path="/login" element={<Login />} />
+         <Route path="/SellerRegistration" element={<SellerRegistration />} />
+
       </Routes>
     </div>
   );
