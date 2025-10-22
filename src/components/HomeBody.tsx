@@ -45,12 +45,7 @@ export default function HomeBody() {
                 >
                   View Menu
                 </button>
-                <button
-                  onClick={handleAddFood}
-                  className="border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white px-8 py-4 rounded-full font-semibold text-lg transition-all duration-300 transform hover:scale-105"
-                >
-                  Add Food
-                </button>
+                
               </div>
 
               {/* Seller Info */}

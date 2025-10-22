@@ -1,7 +1,9 @@
-// src/components/FoodItemsForm.tsx - UPDATED WITH BACK BUTTON
+// src/components/FoodItemsForm.tsx - CORRECTED
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+
+// Temporary: Remove AuthContext import if it doesn't exist
+// import { useAuth } from '../context/AuthContext';
 
 interface FoodItem {
   id?: string;
@@ -26,7 +28,10 @@ interface Toast {
 }
 
 const FoodItemForm: React.FC = () => {
-  const { user } = useAuth();
+  // Temporary: Get user from localStorage instead of AuthContext
+  const currentSeller = JSON.parse(localStorage.getItem('currentSeller') || 'null');
+  const user = currentSeller || null;
+  
   const navigate = useNavigate();
   
   const [foodItem, setFoodItem] = useState<FoodItem>({
@@ -321,6 +326,9 @@ const FoodItemForm: React.FC = () => {
               </p>
               <div className="mt-2 text-orange-200 animate-fade-in-up animation-delay-200">
                 Seller: <span className="font-semibold">{user.name}</span>
+                {user.restaurantName && (
+                  <span> | Restaurant: <span className="font-semibold">{user.restaurantName}</span></span>
+                )}
               </div>
             </div>
           </div>

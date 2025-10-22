@@ -11,15 +11,15 @@ import AdminDashboard from './components/AdminDashboard';
 import Cart from './components/Cart';
 import { CartProvider } from './context/CartContext';
 import Signin from './components/Signin';
-import FoodItemsForm from './components/FoodItemsForm';
-import Sandwich from './components/Sandwish';
+import FoodItemForm from './components/FoodItemForm';
+import Sandwich from './components/Sandwich';
 import { AuthProvider } from './context/AuthContext';
 import MyProfile from './components/MyProfile';
 
 // AppContent component should be inside Router
 const AppContent: React.FC = () => {
   const location = useLocation();
-  const showNavbar = !['/', '/signin'].includes(location.pathname);
+  const showNavbar = !['/', '/signin','/seller/auth'].includes(location.pathname);
 
   return (
     <div className="App"> 
@@ -34,8 +34,7 @@ const AppContent: React.FC = () => {
         <Route path="/seller/auth" element={<SellerAuth />} /> 
         <Route path="/seller/dashboard" element={<SellerDashboard />} />
         <Route path="/admin/dashboard" element={<AdminDashboard />} />
-        <Route path="/FoodItemsForm" element={<FoodItemsForm />} /> 
-        <Route path="/signin" element={<Signin />} /> 
+        <Route path="/FoodItemForm" element={<FoodItemForm />} /> 
         <Route path="/sandwich" element={<Sandwich />} />
         <Route path="*" element={<HomeBody />} />
         <Route path="/profile" element={<MyProfile />} />

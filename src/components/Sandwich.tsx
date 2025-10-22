@@ -546,8 +546,98 @@ const Sandwich: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Signup Form Popup */}
+      {showSignup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div className="bg-gradient-to-r from-amber-500 to-orange-500 p-6 text-white rounded-t-2xl">
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-bold">Complete Your Order</h2>
+                <button
+                  onClick={() => setShowSignup(false)}
+                  className="text-white hover:text-gray-200 text-2xl transition-transform hover:scale-110"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="text-orange-100 mt-2">
+                {currentItem ? `Ordering: ${currentItem.name}` : `Ordering ${cartItems.length} items`}
+              </p>
+            </div>
+
+            <form onSubmit={handleSignupSubmit} className="p-6 space-y-4">
+              <div>
+                <label className="block text-gray-700 mb-2">Full Name *</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={signupForm.name}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-2">Email *</label>
+                <input
+                  type="email"
+                  name="email"
+                  value={signupForm.email}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-2">Phone *</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={signupForm.phone}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-2">Password *</label>
+                <input
+                  type="password"
+                  name="password"
+                  value={signupForm.password}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-gray-700 mb-2">Confirm Password *</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  value={signupForm.confirmPassword}
+                  onChange={handleInputChange}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white py-3 px-6 rounded-lg font-semibold transition-all duration-200 transform hover:scale-105"
+              >
+                {currentItem ? `Order ${currentItem.name} - ₹${currentItem.price}` : `Place Order - ₹${totalAmount}`}
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
-    
   );
 };
 
