@@ -67,35 +67,23 @@ const SellerLogin: React.FC = () => {
     }
 
     setIsLoading(true);
+    setErrors({}); // Clear previous errors
 
     try {
-      // Simulate API call
-      const response = await fetch('/api/sellers/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          rememberMe
-        }),
-      });
+      const storedSellerString = localStorage.getItem('currentSeller');
+      const storedSeller = storedSellerString ? JSON.parse(storedSellerString) : null;
 
-      if (response.ok) {
-        const data = await response.json();
-        // Store token or user data
-        localStorage.setItem('sellerToken', data.token);
-        localStorage.setItem('sellerData', JSON.stringify(data.seller));
+      if (storedSeller && storedSeller.email === formData.email && storedSeller.password === formData.password) {
+        // Simulate successful login
+        localStorage.setItem('sellerData', JSON.stringify(storedSeller));
+        localStorage.setItem('sellerToken', 'dummy-seller-token'); // Set a dummy token
         
-        // Redirect to seller dashboard
         navigate('/seller/dashboard');
       } else {
-        const errorData = await response.json();
-        setErrors({ general: errorData.message || 'Login failed' });
+        setErrors({ general: 'Invalid email or password.' });
       }
     } catch (error) {
-      setErrors({ general: 'Network error. Please try again.' });
+      setErrors({ general: 'An unexpected error occurred during login simulation.' });
     } finally {
       setIsLoading(false);
     }

@@ -5,6 +5,7 @@ interface RegistrationFormData {
   restaurantName: string;
   firstName: string;
   lastName: string;
+  email: string;
   address: string;
   mobileNumber: string;
   password: string;
@@ -16,6 +17,7 @@ interface RegistrationErrors {
   restaurantName?: string;
   firstName?: string;
   lastName?: string;
+  email?: string;
   address?: string;
   mobileNumber?: string;
   password?: string;
@@ -30,6 +32,7 @@ const RestaurantSellerRegistration: React.FC = () => {
     restaurantName: '',
     firstName: '',
     lastName: '',
+    email: '',
     address: '',
     mobileNumber: '',
     password: '',
@@ -62,6 +65,13 @@ const RestaurantSellerRegistration: React.FC = () => {
       newErrors.lastName = 'Last name is required';
     } else if (formData.lastName.trim().length < 2) {
       newErrors.lastName = 'Last name must be at least 2 characters';
+    }
+
+    // Email validation
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email address is required';
+    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email address';
     }
 
     // Address validation
@@ -156,39 +166,27 @@ const RestaurantSellerRegistration: React.FC = () => {
     setIsLoading(true);
 
     try {
-      // Prepare data for API call
-      const submitData = {
-        restaurantName: formData.restaurantName.trim(),
-        firstName: formData.firstName.trim(),
-        lastName: formData.lastName.trim(),
-        address: formData.address.trim(),
-        mobileNumber: formData.mobileNumber.replace(/\D/g, ''), // Store only digits
-        password: formData.password,
-        userType: 'restaurant_seller'
+      // Simulate a successful registration and create a dummy seller
+      const dummySeller = {
+        id: Date.now(),
+        name: `${formData.firstName} ${formData.lastName}`,
+        restaurantName: formData.restaurantName,
+        email: formData.email,
+        phone: formData.mobileNumber,
+        address: formData.address,
+        password: formData.password, // Storing password for login simulation
+        status: 'approved',
+        registrationDate: new Date().toISOString(),
       };
 
-      const response = await fetch('/api/restaurant-sellers/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(submitData),
-      });
+      // Store the dummy seller in localStorage for the dashboard to use
+      localStorage.setItem('currentSeller', JSON.stringify(dummySeller));
+      
+      // Redirect to seller dashboard
+      navigate('/seller/dashboard');
 
-      if (response.ok) {
-        const data = await response.json();
-        // Store token or redirect to login
-        localStorage.setItem('restaurantSellerToken', data.token);
-        localStorage.setItem('restaurantSellerData', JSON.stringify(data.seller));
-        
-        // Redirect to restaurant dashboard
-        navigate('/restaurant/dashboard');
-      } else {
-        const errorData = await response.json();
-        setErrors({ general: errorData.message || 'Registration failed. Please try again.' });
-      }
     } catch (error) {
-      setErrors({ general: 'Network error. Please check your connection and try again.' });
+      setErrors({ general: 'An unexpected error occurred.' });
     } finally {
       setIsLoading(false);
     }
@@ -269,8 +267,8 @@ const RestaurantSellerRegistration: React.FC = () => {
                 name="firstName"
                 type="text"
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-200 ${
-                  errors.firstName 
-                    ? 'border-red-500 bg-red-50' 
+                  errors.firstName
+                    ? 'border-red-500 bg-red-50'
                     : 'border-gray-300 hover:border-gray-400'
                 }`}
                 placeholder="First name"
@@ -296,8 +294,8 @@ const RestaurantSellerRegistration: React.FC = () => {
                 name="lastName"
                 type="text"
                 className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-200 ${
-                  errors.lastName 
-                    ? 'border-red-500 bg-red-50' 
+                  errors.lastName
+                    ? 'border-red-500 bg-red-50'
                     : 'border-gray-300 hover:border-gray-400'
                 }`}
                 placeholder="Last name"
@@ -313,6 +311,35 @@ const RestaurantSellerRegistration: React.FC = () => {
                 </p>
               )}
             </div>
+          </div>
+
+          {/* Email Address */}
+          <div>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              Email Address *
+            </label>
+            <input
+              id="email"
+              name="email"
+              type="email"
+              autoComplete="email"
+              className={`w-full px-4 py-3 border rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition duration-200 ${
+                errors.email
+                  ? 'border-red-500 bg-red-50'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+              placeholder="Enter your email address"
+              value={formData.email}
+              onChange={handleChange}
+            />
+            {errors.email && (
+              <p className="mt-1 text-sm text-red-600 flex items-center">
+                <svg className="h-4 w-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                </svg>
+                {errors.email}
+              </p>
+            )}
           </div>
 
           {/* Address */}
@@ -539,6 +566,7 @@ const RestaurantSellerRegistration: React.FC = () => {
                   Creating Account...
                 </>
               ) : (
+                
                 'Create Restaurant Account'
               )}
             </button>
